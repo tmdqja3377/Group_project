@@ -1,16 +1,14 @@
-import Calender, { Calendar } from 'react-calendar';
-import "react-calendar/dist/Calendar.css";
-import "./Apps.css"
 import Navbar from "./assets/components/Navbar.jsx"
 
+import 'react-date-range/dist/styles.css'; // main style file 
+import 'react-date-range/dist/theme/default.css'; // theme css file
+import Calendars from "./assets/components/Datecalendar.jsx"
 
 function App() {
   return (
     <div className="App">
       <div className='Menubar'><Navbar/></div> 
-      {/* ºÎÆ®½ºÆ®·¦ : https://getbootstrap.com/docs/5.3/components/navbar/ */}
-      <div className="Calendar"><Calendar/></div>
-
+      <div className="Calendar"><Calendars/></div>
     </div>
   );
 }
