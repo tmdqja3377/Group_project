@@ -1,5 +1,5 @@
 import React from "react";
-import '../../../srcv1/Appv.css'
+// import '../../../public/css/Appv.css'
 import { Link } from 'react-router-dom';
 
 function Navibar() {

@@ -1,11 +1,9 @@
-import { Link } from 'react-router-dom';
-import '../Appv.css'; // 전체 스타일 불러오기
-import Navibar from '../../src/assets/components/Navibar.jsx';
+import '../../public/css/Appv.css';
 
 function Home() {
     return (
         <>
-            {/* 메인 컨테이너 */}
+            {/* 메인컨테이너 */}
             <div className="container">
                 <div className="content">
                     <div className="text-box">
@@ -16,7 +14,7 @@ function Home() {
                         </h1>
                     </div>
                     <p className="description">
-                        고민만 하던 여행 계획을 <span className="highlight">캡스톤</span>을 통해 몇 분 만에 스케줄링
+                        고민만 하던 여행 계획을 <span className="highlight">CarryA</span>을 통해 몇 분 만에 스케줄링
                         해보세요.
                     </p>
                     <div className="button-box">
