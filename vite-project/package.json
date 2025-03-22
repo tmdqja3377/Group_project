@@ -17,6 +17,7 @@
     "react-date-range": "^2.0.1",
     "react-dom": "^18.3.1",
     "react-easepick": "^1.0.0",
+    "react-router-dom": "^7.4.0",
     "sass": "^1.86.0"
   },
   "devDependencies": {

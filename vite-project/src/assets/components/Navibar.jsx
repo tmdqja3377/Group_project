@@ -1,13 +1,13 @@
-// src/pages/SpotPage.js
+import React from "react";
+import '../../../srcv1/Appv.css'
 import { Link } from 'react-router-dom';
-function SpotPage() {
-    return (
-        <>
-            {/* 네비게이션 바 */}
-            <nav className="navbar">
+
+function Navibar() {
+    return(
+        <nav className="navbar">
                 <div className="logo">
                     <Link to="/">
-                        <img src="/img/logo.png" alt="로고" />
+                        CarryA
                     </Link>
                 </div>
                 <div className="nav-buttons">
@@ -19,11 +19,7 @@ function SpotPage() {
                     </Link>
                 </div>
             </nav>
-            <div className="App">
-                <h2 style={{ marginTop: '100px' }}>📍 여행지 페이지입니다!</h2>
-            </div>
-        </>
     );
 }
 
-export default SpotPage;
+export default Navibar;

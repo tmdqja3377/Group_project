@@ -1,26 +1,10 @@
 import { Link } from 'react-router-dom';
-import '../App.css'; // 전체 스타일 불러오기
+import '../Appv.css'; // 전체 스타일 불러오기
+import Navibar from '../../src/assets/components/Navibar.jsx';
 
 function Home() {
     return (
         <>
-            {/* 네비게이션 바 */}
-            <nav className="navbar">
-                <div className="logo">
-                    <Link to="/">
-                        <img src="/img/logo.png" alt="로고" />
-                    </Link>
-                </div>
-                <div className="nav-buttons">
-                    <Link to="/spot" className="nav-button">
-                        여행지
-                    </Link>
-                    <Link to="/login" className="nav-button login-button">
-                        로그인
-                    </Link>
-                </div>
-            </nav>
-
             {/* 메인 컨테이너 */}
             <div className="container">
                 <div className="content">
@@ -39,7 +23,7 @@ function Home() {
                         <button className="start-button">시작하기</button>
                     </div>
                     <div className="image-box">
-                        <img src="/img/1.png" alt="여행 플래너 이미지" />
+                        <img src="../public/img/1.png" alt="여행 플래너 이미지" />
                     </div>
                 </div>
             </div>
