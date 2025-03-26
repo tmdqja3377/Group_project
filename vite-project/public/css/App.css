@@ -47,7 +47,7 @@
   font-size: 40px;
 }
 
-.App {
+/* .App {
   display: flex;
   background-color: greenyellow;
   flex-direction: column;
@@ -55,7 +55,7 @@
   height: 100%;
   padding: 100%;
 
-}
+} */
 
 .header {
   color: #42a7f5;
