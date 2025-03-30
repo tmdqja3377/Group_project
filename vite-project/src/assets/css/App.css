@@ -1,0 +1,16 @@
+/* App.css */
+/* ✅ 전체 페이지 공통 스타일만 유지 */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: white;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+.App {
+    text-align: center;
+    padding: 40px;
+}
