@@ -17,6 +17,9 @@ function Navibar() {
                     <Link to="/login" className="nav-button login-button">
                         로그인
                     </Link>
+                    <Link to="/map" className="nav-button map">
+                        지도
+                    </Link>
                 </div>
             </nav>
     );

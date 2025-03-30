@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../public/css/Appv.css"
 
+
 function SpotPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -119,7 +120,7 @@ function SpotPage() {
       <div className="App">
         <h2 style={{ marginTop: '40px' }}>{getTitle()}</h2>
         <ul className="spot-list">
-          {filteredSpots.length > 0 ? (
+          {/* {filteredSpots.length > 0 ? (
             filteredSpots.map((spot) => (
               <li key={spot.id} className="spot-item">
                 <strong>{spot.name}</strong> - {spot.description}
@@ -127,7 +128,7 @@ function SpotPage() {
             ))
           ) : (
             <p>검색 결과가 없습니다.</p>
-          )}
+          )} */}
         </ul>
       </div>
     </>
