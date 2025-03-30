@@ -15,6 +15,7 @@
     "moment": "^2.30.1",
     "react": "^18.3.1",
     "react-date-range": "^2.0.1",
+    "react-datepicker": "^8.2.1",
     "react-dom": "^18.3.1",
     "react-easepick": "^1.0.0",
     "react-router-dom": "^7.4.0",
