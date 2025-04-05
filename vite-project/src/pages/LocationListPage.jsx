@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import DatePicker from 'react-datepicker';
 import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/LocationListPage.css';
-import 'react-datepicker/dist/react-datepicker.css';
+import CalendarComponent from '../assets/components/Datecalendar.jsx';
 // import { regionData } from '../data/regionData';
 
 function LocationListPage() {
@@ -81,20 +80,16 @@ function LocationListPage() {
 
                 {/* 날짜 선택 */}
                 {showDatePicker && (
-                    <div className="date-picker-container">
-                        <DatePicker
-                            selectsRange
-                            startDate={startDate}
-                            endDate={endDate}
-                            onChange={(dates) => {
-                                const [start, end] = dates;
-                                setStartDate(start);
-                                setEndDate(end);
-                            }}
-                            dateFormat="yyyy-MM-dd"
-                            inline
-                        />
-                    </div>
+                <div className="date-picker-container">
+                    <CalendarComponent
+                    startDate={startDate}
+                    endDate={endDate}
+                    onRangeChange={({ selection }) => {
+                        setStartDate(selection.startDate);
+                        setEndDate(selection.endDate);
+                    }}
+                    />
+                </div>
                 )}
             </div>
         </>
