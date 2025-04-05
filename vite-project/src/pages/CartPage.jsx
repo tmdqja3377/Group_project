@@ -1,108 +1,74 @@
-import { useEffect, useRef } from 'react';
-import Navbar from '../assets/components/Navbar.jsx';
-import ScheduleBoard from '../assets/components/Cart/ScheduleBoard.jsx';
-import { useSchedule, ScheduleProvider } from '../assets/context/ScheduleContext.jsx';
-
-const CartContent = () => {
-  const mapRef = useRef(null);
-  const markersRef = useRef([]);
-  const { scheduleData, setScheduleData } = useSchedule();
-
-  // ✅ 1. 페이지 진입 시 저장된 여행 데이터 가져와서 일정 생성
-  useEffect(() => {
-    const saved = localStorage.getItem('plannedTrip');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const { region, startDate, endDate, travelers } = parsed;
-
-      setScheduleData({
-        '1일차': [
-          {
-            id: 1,
-            name: `${region.name} 랜드마크`,
-            lat: region.lat,
-            lng: region.lng,
-            address: `${region.name} 중심지`,
-            image: '/img/placeholder.jpg',
-            stars: 4.5,
-            review: '대표 명소',
-            sns: 'https://map.naver.com',
-            memo: `${region.name}의 대표 장소`,
-            time: '10:00',
-          },
-        ],
-        '2일차': [],
-        '3일차': [],
-      });
-    }
-  }, [setScheduleData]);
-
-  // ✅ 2. 지도 마커 렌더링
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const map = new window.naver.maps.Map(mapRef.current, {
-      center: new window.naver.maps.LatLng(37.5665, 126.9780),
-      zoom: 12,
-      zoomControl: true,
-      zoomControlOptions: { position: window.naver.maps.Position.RIGHT_BOTTOM },
-    });
-
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
-
-    const allItems = Object.values(scheduleData).flat();
-
-    allItems.forEach((location) => {
-      const marker = new window.naver.maps.Marker({
-        position: new window.naver.maps.LatLng(location.lat, location.lng),
-        map,
-        title: location.name,
-        icon: {
-          content: `<div style="
-            background-color: #ff3b30;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-          ">${location.name}${location.time ? ` (${location.time})` : ''}</div>`,
-          anchor: new window.naver.maps.Point(15, 40),
-        },
-      });
-
-      markersRef.current.push(marker);
-    });
-
-    if (allItems.length > 0) {
-      const bounds = new window.naver.maps.LatLngBounds();
-      allItems.forEach(loc => {
-        bounds.extend(new window.naver.maps.LatLng(loc.lat, loc.lng));
-      });
-      map.fitBounds(bounds, { padding: 100 });
-    }
-
-  }, [scheduleData]);
-
-  return (
-    <>
-      <Navbar />
-      <div style={{ marginTop: '80px', padding: '20px' }}>
-        <ScheduleBoard />
-        <div style={{ marginTop: '20px', width: '100%', height: '600px', maxWidth: '1200px', margin: 'auto' }}>
-          <div id="map" ref={mapRef} style={{ width: '100%', height: '100%' }} />
-        </div>
-      </div>
-    </>
-  );
-};
+import React, { useEffect, useState } from 'react';
+import Navbar from '../assets/components/Navbar';
+import { ScheduleProvider } from '../assets/context/ScheduleContext';
+import '../assets/css/CartPage.css';
 
 const CartPage = () => {
+  const [tripInfo, setTripInfo] = useState(null);
+
+  useEffect(() => {
+    const storedTrip = localStorage.getItem('plannedTrip');
+    if (storedTrip) {
+      setTripInfo(JSON.parse(storedTrip));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (window.naver && tripInfo) {
+      const { lat, lng } = tripInfo.region;
+      const mapOptions = {
+        center: new window.naver.maps.LatLng(lat, lng),
+        zoom: 13,
+      };
+      const map = new window.naver.maps.Map('naver-map', mapOptions);
+      new window.naver.maps.Marker({
+        position: new window.naver.maps.LatLng(lat, lng),
+        map,
+        title: tripInfo.region.name,
+      });
+    }
+  }, [tripInfo]);
+
   return (
     <ScheduleProvider>
-      <CartContent />
+      <Navbar />
+      <div className="cart-container">
+        {/* Left Sidebar: 여행 정보 */}
+        <div className="left-sidebar">
+          <h2>여행 정보</h2>
+          {tripInfo ? (
+            <ul>
+              <li><strong>지역:</strong> {tripInfo.region.name}</li>
+              <li><strong>날짜:</strong> {new Date(tripInfo.startDate).toLocaleDateString()} ~ {new Date(tripInfo.endDate).toLocaleDateString()}</li>
+              <li><strong>인원수:</strong> {tripInfo.travelers}명</li>
+            </ul>
+          ) : (
+            <p>여행 정보를 불러오는 중...</p>
+          )}
+        </div>
+
+        {/* Map section: 네이버 지도 + 필터 버튼 (가운데) */}
+        <div className="map-section">
+          <div className="map-filters">
+            <button>음식점</button>
+            <button>명소</button>
+            <button>카페</button>
+          </div>
+          <div id="naver-map" className="map-box">
+            {/* 지도 삽입 위치 */}
+          </div>
+        </div>
+
+        {/* Right Sidebar: 장바구니 */}
+        <div className="right-sidebar">
+          <h3>내 일정</h3>
+          {/* 여기에 장바구니 UI 추가 가능 */}
+          <p>장바구니에 담긴 장소들이 여기에 표시됩니다.</p>
+        </div>
+      </div>
     </ScheduleProvider>
   );
 };
 
 export default CartPage;
+
