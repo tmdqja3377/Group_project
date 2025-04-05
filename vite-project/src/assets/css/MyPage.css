@@ -1,0 +1,60 @@
+/* src/pages/MyPage.css */
+
+.mypage-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 70px); /* 네비게이션 바 제외 높이 */
+    background-color: #f9f9f9;
+}
+
+.mypage-box {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px; /* 마이페이지 박스 넓이 조정 */
+    text-align: left;
+    display: flex;
+}
+
+.mypage-sidebar {
+    width: 200px; /* 사이드바 넓이 */
+    border-right: 1px solid #ddd;
+    padding-right: 20px;
+}
+
+.mypage-sidebar button {
+    width: 100%;
+    padding: 12px;
+    background-color: black;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.mypage-sidebar button:hover {
+    background-color: #333;
+}
+
+.mypage-content {
+    flex: 1;
+    padding-left: 20px;
+}
+
+.mypage-content h2 {
+    margin-bottom: 30px;
+    font-size: 24px;
+    color: #333;
+}
+
+.mypage-content p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 15px;
+}
