@@ -30,6 +30,9 @@ function Navbar() {
                 <Link to="/location" className="nav-button">
                     여행지
                 </Link>
+                <Link to="/chatbot" className="nav-button">
+                    AI
+                </Link>
                 {isLoggedIn && (
                     <Link to="/mypage" className="nav-button">
                         마이페이지

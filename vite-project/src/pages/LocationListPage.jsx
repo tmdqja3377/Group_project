@@ -1,104 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import DatePicker from 'react-datepicker';
+import React, { useState } from 'react';
 import Navbar from '../assets/components/Navbar.jsx';
+import CalendarComponent from '../assets/components/Datecalendar.jsx';
 import '../assets/css/LocationListPage.css';
-import 'react-datepicker/dist/react-datepicker.css';
-// import { regionData } from '../data/regionData';
 
 function LocationListPage() {
-    const navigate = useNavigate();
-    
-    // 기본 상태 관리
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)); // 기본 3일 여행
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [selectedRegion, setSelectedRegion] = useState(null);
-    const [travelers, setTravelers] = useState(2);
-    const [transportation, setTransportation] = useState('대중교통');
-    const [budget, setBudget] = useState('중간');
-    const [interests, setInterests] = useState([]);
-    const [savedTrips, setSavedTrips] = useState([]);
-    const [showPlanningOptions, setShowPlanningOptions] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000));
+  const [travelers, setTravelers] = useState(null);
+  const [openDropdown, setOpenDropdown] = useState(null);
 
-    // 국내 지역 데이터
-    const koreanRegions = [
-        { name: '서울', slug: 'seoul', image: '/img/seoul/seoul.jpg', description: '대한민국의 수도, 현대와 전통이 공존하는 도시' },
-        { name: '부산', slug: 'busan', image: '/img/busan/busan.jpg', description: '해변과 산이 어우러진 항구도시' },
-        { name: '제주', slug: 'jeju', image: '/img/jeju/jeju.jpg', description: '아름다운 자연과 독특한 문화의 섬' },
-        { name: '경주', slug: 'gyeongju', image: '/img/gyeongju/gyeongju.jpg', description: '한국의 고대 역사가 살아 숨쉬는 도시' },
-        { name: '강릉', slug: 'gangneung', image: '/img/gangneung/gangneung.jpg', description: '동해의 아름다운 해변과 커피 문화의 도시' },
-        { name: '전주', slug: 'jeonju', image: '/img/jeonju/jeonju.jpg', description: '한옥마을과 전통 문화의 중심지' },
-        { name: '여수', slug: 'yeosu', image: '/img/yeosu/yeosu.jpg', description: '아름다운 밤바다와 해양 관광의 중심지' },
-        { name: '속초', slug: 'sokcho', image: '/img/sokcho/sokcho.jpg', description: '설악산과 동해가 만나는 관광 도시' }
-    ];
+  const regions = [
+    { name: '서울', lat: 37.5665, lng: 126.9780 },
+    { name: '부산', lat: 35.1796, lng: 129.0756 },
+    { name: '제주', lat: 33.4996, lng: 126.5312 },
+    { name: '경주', lat: 35.8562, lng: 129.2247 },
+    { name: '강릉', lat: 37.7519, lng: 128.8761 },
+    { name: '전주', lat: 35.8242, lng: 127.1479 },
+    { name: '여수', lat: 34.7604, lng: 127.6622 },
+    { name: '속초', lat: 38.2048, lng: 128.5912 },
+  ];
 
-    const filteredRegions = koreanRegions.filter(
-        region => region.name.includes(searchTerm) || region.description.includes(searchTerm)
-    );
+  const handleSubmit = () => {
+    if (!selectedRegion || !startDate || !endDate || !travelers) {
+      alert('지역, 날짜, 인원 수를 모두 선택해 주세요.');
+      return;
+    }
+    const tripData = { region: selectedRegion, startDate, endDate, travelers };
+    localStorage.setItem('plannedTrip', JSON.stringify(tripData));
+    window.location.href = '/Cart';
+  };
 
-    // 여행 날짜 계산
-    const calculateDays = (start, end) => {
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        const diffTime = Math.abs(endDate - startDate);
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    };
+  return (
+    <>
+      <Navbar />
+      <div className="location-list-container">
+        <h1 className="location-title">여행 일정 선택</h1>
 
-    return (
-        <>
-            <Navbar />
-            <div className="location-list-container">
-                <h1 className="location-title">국내 여행 계획하기</h1>
-                
-                {/* 검색 필터 */}
-                <div className="search-filters">
-                    <input 
-                        type="text" 
-                        className="search-input" 
-                        placeholder="여행지 검색 (예: 서울, 해변, 역사...)" 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    
-                    <button className="date-button" onClick={() => setShowDatePicker(!showDatePicker)}>
-                        {startDate && endDate
-                            ? `${startDate.toLocaleDateString()} ~ ${endDate.toLocaleDateString()}`
-                            : '날짜 선택'}
-                    </button>
+        <div className="search-bar-ui">
+          <button className="pill-button" onClick={() => setOpenDropdown(openDropdown === 'region' ? null : 'region')}>
+            {selectedRegion?.name || '지역 선택'}
+          </button>
+          <button className="pill-button" onClick={() => setOpenDropdown(openDropdown === 'date' ? null : 'date')}>
+            {startDate ? `${startDate.toLocaleDateString()} ~ ${endDate.toLocaleDateString()}` : '날짜 선택'}
+          </button>
+          {/*이거랑 밑에 버튼이랑 고민해서 수정해야할듯*/} 
+          <select
+            className="filter-select"
+            value={travelers}
+            onChange={(e) => setTravelers(Number(e.target.value))}
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                <option key={num} value={num}>{num}명</option>
+            ))}
+          </select>
+          {/* <button className="pill-button" onClick={() => setOpenDropdown(openDropdown === 'guest' ? null : 'guest')}>
+            {travelers ? `${travelers}명` : '인원 선택'}
+          </button> */}
+        </div>
 
-                    <select 
-                        className="filter-select"
-                        value={travelers}
-                        onChange={(e) => setTravelers(Number(e.target.value))}
-                    >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
-                            <option key={num} value={num}>{num}명</option>
-                        ))}
-                    </select>
-                </div>
+        {/* 아래 드롭다운 영역 */}
+        {openDropdown === 'region' && (
+          <div className="dropdown-panel">
+            <h3>지역 선택</h3>
+            <ul className="region-text-list">
+              {regions.map(region => (
+                <li
+                  key={region.name}
+                  className={`region-item ${selectedRegion?.name === region.name ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedRegion(region);
+                    setOpenDropdown(null);
+                  }}
+                >
+                  {region.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-                {/* 날짜 선택 */}
-                {showDatePicker && (
-                    <div className="date-picker-container">
-                        <DatePicker
-                            selectsRange
-                            startDate={startDate}
-                            endDate={endDate}
-                            onChange={(dates) => {
-                                const [start, end] = dates;
-                                setStartDate(start);
-                                setEndDate(end);
-                            }}
-                            dateFormat="yyyy-MM-dd"
-                            inline
-                        />
-                    </div>
-                )}
-            </div>
-        </>
-    );
+        {openDropdown === 'date' && (
+          <div className="dropdown-panel">
+            <h4>날짜 선택</h4>
+            <CalendarComponent
+              startDate={startDate}
+              endDate={endDate}
+              onRangeChange={({ selection }) => {
+                setStartDate(selection.startDate);
+                setEndDate(selection.endDate);
+              }}
+            />
+          </div>
+        )}
+
+        {openDropdown === 'guest' && (
+          <div className="dropdown-panel">
+            <h3>인원 수 선택</h3>
+            <ul className="region-text-list">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                <li
+                  key={num}
+                  className={`region-item ${travelers === num ? 'selected' : ''}`}
+                  onClick={() => {
+                    setTravelers(num);
+                    setOpenDropdown(null);
+                  }}
+                >
+                  {num}명
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button className="create-trip-button" onClick={handleSubmit}>
+          선택한 조건으로 일정 만들기 →
+        </button>
+      </div>
+    </>
+  );
 }
 
 export default LocationListPage;
