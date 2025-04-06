@@ -15,5 +15,9 @@
 9. push명령어를 통해 올리기
    git push
 10. github에서 올린파일 확인
+
+대부분 기능 여기서 명렁어 없이 클릭으로 할 수 있음
+![image](https://github.com/user-attachments/assets/08ed2035-b58e-4c93-95dc-0cd406fdc7bb)
+
    
    
