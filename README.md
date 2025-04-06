@@ -1,4 +1,4 @@
-1. 밑 사진에 있는 main에서 본인 이름파일 생성해뒀으니 거기서 본인파일 관리
+1. 밑 사진에 있는 main있는 위치에 본인아이디(닉네임)파일 생성해뒀으니 거기서 본인파일 관리
 
 ![image](https://github.com/user-attachments/assets/23b3d04a-5ef0-4958-8c79-21894317c9ea)
 
