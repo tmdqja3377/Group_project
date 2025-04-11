@@ -1,0 +1,31 @@
+/* src/pages/PlannerPage.css */
+
+.planner-page {
+  min-height: 100vh;
+  padding: 100px 40px 40px;
+  /* 상단바 높이 고려하여 padding-top 늘림 */
+  background: linear-gradient(to right, #dbeafe, #f0f9ff);
+  background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80');
+  background-size: cover;
+  background-position: center;
+  backdrop-filter: blur(4px);
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.planner-page .header {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #fff;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.planner-page .header h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.planner-page .header p {
+  font-size: 1.2rem;
+  margin-top: 10px;
+}

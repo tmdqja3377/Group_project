@@ -1,69 +1,69 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './loginpage.css';
 
-function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSignup, setIsSignup] = useState(false);
+function LoginPage({ setIsLoggedIn }) {
+  const [form, setForm] = useState({ username: '', password: '' });
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const storedUsers = JSON.parse(localStorage.getItem('users')) || {};
-    if (isSignup) {
-      storedUsers[username] = password;
-      localStorage.setItem('users', JSON.stringify(storedUsers));
-      setIsSignup(false);
-    } else {
-      if (storedUsers[username] === password) {
-        localStorage.setItem('isLoggedIn', 'true');
-        navigate('/');
-      } else {
-        alert('아이디 또는 비밀번호가 일치하지 않습니다.');
-      }
+
+    if (!form.username || !form.password) {
+      alert('아이디와 비밀번호를 입력하세요');
+      return;
     }
+
+    fetch('http://localhost:3000/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(form),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message === '로그인 성공') {
+          alert(data.message);
+          setIsLoggedIn(true);
+          navigate('/');
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch((err) => {
+        console.error('로그인 오류:', err);
+        alert('서버 오류입니다.');
+      });
   };
 
   return (
-    <>
-      <div className="App" style={{ marginTop: '100px' }}>
-        <h2>{isSignup ? '회원가입' : '로그인'}</h2>
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '10px' }}>
-            <label htmlFor="username">아이디:</label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={{ marginLeft: '10px' }}
-            />
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label htmlFor="password">비밀번호:</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ marginLeft: '10px' }}
-            />
-          </div>
-          <button type="submit">{isSignup ? '회원가입' : '로그인'}</button>
-        </form>
-        <p style={{ marginTop: '10px' }}>
-          {isSignup ? (
-            <span onClick={() => setIsSignup(false)} style={{ cursor: 'pointer' }}>
-              로그인하러 가기
-            </span>
-          ) : (
-            <span onClick={() => setIsSignup(true)} style={{ cursor: 'pointer' }}>
-              회원가입하러 가기
-            </span>
-          )}
-        </p>
-      </div>
-    </>
+    <div className="login-container">
+      <form className="login-form" onSubmit={handleSubmit}>
+        <h2>로그인</h2>
+        <input
+          type="text"
+          placeholder="아이디"
+          value={form.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+        />
+        <input
+          type="password"
+          placeholder="비밀번호"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+        />
+        <button type="submit">로그인</button>
+        <button
+          type="button"
+          className="signup-button"
+          onClick={() => navigate('/register')}
+        >
+          회원가입
+        </button>
+      </form>
+    </div>
   );
 }
 

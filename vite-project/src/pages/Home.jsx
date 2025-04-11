@@ -1,9 +1,17 @@
+// src/pages/Home.jsx
+
 import '../../public/css/Appv.css';
+import { useNavigate } from 'react-router-dom';
 
 function Home() {
+    const navigate = useNavigate();
+
+    const handleStartClick = () => {
+        navigate('/planner');
+    };
+
     return (
         <>
-            {/* 메인컨테이너 */}
             <div className="container">
                 <div className="content">
                     <div className="text-box">
@@ -18,10 +26,12 @@ function Home() {
                         해보세요.
                     </p>
                     <div className="button-box">
-                        <button className="start-button">시작하기</button>
+                        <button className="start-button" onClick={handleStartClick}>
+                            시작하기
+                        </button>
                     </div>
                     <div className="image-box">
-                        <img src="../public/img/1.png" alt="여행 플래너 이미지" />
+                        <img src="/img/1.png" alt="여행 플래너 이미지" />
                     </div>
                 </div>
             </div>
