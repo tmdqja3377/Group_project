@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../assets/components/Navbar';
 import '../assets/css/CartPage.css';
+import { getPlaces } from '../assets/components/Databaseapi.jsx';
 
 const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
@@ -16,24 +17,13 @@ const CartPage = () => {
   }, []);
 
   //데이터베이스 api 불러오기
-  const API_KEY = import.meta.env.VITE_WEB_API_KEY;
-  const API_URL = import.meta.env.VITE_WEB_API_URL;
-
   useEffect(() => {
     if (tripInfo) {
-      fetch(API_URL, {
-        headers: {
-          'x-api-key': API_KEY
-        }
-      })
-        .then(res => res.json())
-        .then(data => {
-          setPlaces(data);
-        })
-        .catch(err => console.error('API 호출 실패:', err));
+      getPlaces()
+        .then(data => setPlaces(data))
+        .catch(err => console.error('데이터 불러오기 실패:', err));
     }
   }, [tripInfo]);
-  
 
 
   useEffect(() => {
