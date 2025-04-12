@@ -5,10 +5,10 @@
   background-color: #fafafa;
   padding-top: 60px; /* 상단 네비게이션과 겹치지 않도록 패딩 추가 */
   box-sizing: border-box;
-}
-
-/* 왼쪽 여행 정보 */
-.left-sidebar {
+  }
+  
+  /* 왼쪽 여행 정보 */
+  .left-sidebar {
   width: 220px;
   background-color: #ffffff;
   padding: 20px;
@@ -16,26 +16,31 @@
   font-size: 14px;
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-}
-
-/* 가운데 지도 영역 */
-.map-section {
+  }
+  
+  /* 가운데 지도 영역 */
+  .map-section {
   flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-sizing: border-box;
-}
-
-.map-filters {
+  position: relative;
+  }
+  
+  .map-filters {
   display: flex;
   gap: 8px;
   justify-content: center;
   margin-bottom: 10px;
-}
-
-.map-filters button {
+  }
+  .map-filters {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 1;
+  }
+  
+  .map-filters button {
   padding: 8px 16px;
   border: 1px solid #ccc;
   background-color: #fff;
@@ -43,22 +48,22 @@
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s;
-}
-
-.map-filters button:hover {
+  }
+  
+  .map-filters button:hover {
   background-color: #f0f0f0;
-}
-
-.map-box {
-  flex: 1;
-  border-radius: 8px;
-  background-color: #e5e5e5;
+  }
+  
+  .map-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  min-height: 400px;
-}
-
-/* 오른쪽 장바구니 */
-.right-sidebar {
+  }
+  
+  /* 오른쪽 장바구니 */
+  .right-sidebar {
   width: 260px;
   background-color: #ffffff;
   padding: 20px;
@@ -66,14 +71,14 @@
   font-size: 14px;
   box-shadow: -2px 0 6px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-}
-
-.right-sidebar h3 {
+  }
+  
+  .right-sidebar h3 {
   margin-top: 0;
   font-size: 16px;
-}
-
-.right-sidebar p {
+  }
+  
+  .right-sidebar p {
   margin-top: 8px;
   color: #666;
-}
+  }

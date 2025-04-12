@@ -50,7 +50,7 @@ function LocationListPage() {
             value={travelers}
             onChange={(e) => setTravelers(Number(e.target.value))}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(num => (
                 <option key={num} value={num}>{num}명</option>
             ))}
           </select>
@@ -94,11 +94,13 @@ function LocationListPage() {
           </div>
         )}
 
-        {openDropdown === 'guest' && (
+        {/* 이것도 추후 고민 */}
+        
+        {/* {openDropdown === 'guest' && (
           <div className="dropdown-panel">
             <h3>인원 수 선택</h3>
             <ul className="region-text-list">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(num => (
                 <li
                   key={num}
                   className={`region-item ${travelers === num ? 'selected' : ''}`}
@@ -112,7 +114,7 @@ function LocationListPage() {
               ))}
             </ul>
           </div>
-        )}
+        )} */}
 
         <button className="create-trip-button" onClick={handleSubmit}>
           선택한 조건으로 일정 만들기 →

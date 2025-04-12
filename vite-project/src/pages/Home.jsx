@@ -1,6 +1,5 @@
-// src/pages/Home.js
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../assets/components/Navbar.jsx'; // ✅ Navbar 컴포넌트 추가
+import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/Home.css';
 
 function Home() {
@@ -12,7 +11,7 @@ function Home() {
 
     return (
         <>
-            <Navbar /> {/* ✅ 공통 네비게이션 바 사용 */}
+            <Navbar />
             <div className="container">
                 <div className="content">
                     <div className="text-box">
