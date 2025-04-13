@@ -77,3 +77,28 @@
   margin-top: 8px;
   color: #666;
 }
+
+.search-button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background-color: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.search-button:hover {
+  background-color: #005ecc;
+}
+
+.search-result {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+}
