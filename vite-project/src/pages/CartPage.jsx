@@ -6,7 +6,9 @@ import { getPlaces } from '../assets/components/Databaseapi.jsx';
 const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
   const [places, setPlaces] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const selectedPlace = places.find(place => String(place.id) === "3");  // 데이터베이스에서 id 3번 정보를 가져옴
+  const [showSearchResult, setShowSearchResult] = useState(false);
 
   //여행정보 불러오기
   useEffect(() => {
@@ -48,6 +50,20 @@ const CartPage = () => {
       <div className="cart-container">
         {/* Left Sidebar: 여행 정보 */}
         <div className="left-sidebar">
+          <h2>검색</h2>
+            <input
+              type="text"
+              placeholder="장소 이름을 입력하세요"
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button
+              className="search-button"
+              onClick={() => setShowSearchResult(!showSearchResult)}
+            >
+              검색
+            </button>
             <h2>여행 정보</h2>
             {tripInfo ? (
             <ul>
@@ -58,18 +74,28 @@ const CartPage = () => {
             ) : (
             <p>여행 정보를 불러오는 중...</p>
             )}
+
+            {/* 검색 결과 (토글 표시) */}
+            {showSearchResult && (
+              <div className="search-result">
+                <p>🔍 "{searchTerm}" 검색 결과 표시 영역</p>
+                {/* 여기에 실제 결과 리스트를 map으로 출력 가능 */}
+              </div>
+            )}
         </div>
+
+        
 
         {/* Map section: 네이버 지도 + 필터 버튼 (가운데) */}
         <div className="map-section">
-            <div className="map-filters">
+          <div className="map-filters">
             <button>음식점</button>
             <button>명소</button>
             <button>카페</button>
             </div>
             <div id="naver-map" className="map-box">
             {/* 지도 삽입 위치 */}
-            </div>
+          </div>
         </div>
         
         {/* 임시 예제 id = 3번 데이터 불러와서 보여줌 */}
