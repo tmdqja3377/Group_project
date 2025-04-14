@@ -18,6 +18,84 @@
   box-sizing: border-box;
 }
 
+/* 검색창 (여행 정보 위) */
+.search-inline-box {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 24px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+}
+
+.search-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.search-input-full {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+}
+
+.autocomplete-list {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  list-style: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1000;
+  margin-bottom: 16px;
+}
+
+.autocomplete-list li {
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.autocomplete-list li:hover {
+  background-color: #f0f0f0;
+}
+
+
+/* 최근 검색어 */
+.search-history {
+  background-color: #f9f9f9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.search-history-item {
+  padding: 6px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.search-history-item:last-child {
+  border-bottom: none;
+}
+
+.search-history-item:hover {
+  color: #007aff;
+}
+
+.clock-icon {
+  margin-right: 6px;
+  font-size: 13px;
+}
+
 /* 가운데 지도 영역 */
 .map-section {
   flex: 1;
@@ -76,29 +154,4 @@
 .right-sidebar p {
   margin-top: 8px;
   color: #666;
-}
-
-.search-button {
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px 10px;
-  background-color: #007aff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.search-button:hover {
-  background-color: #005ecc;
-}
-
-.search-result {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #333;
 }

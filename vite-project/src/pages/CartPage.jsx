@@ -5,7 +5,7 @@ import '../assets/css/CartPage.css';
 const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showSearchResult, setShowSearchResult] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     const storedTrip = localStorage.getItem('plannedTrip');
@@ -30,27 +30,64 @@ const CartPage = () => {
     }
   }, [tripInfo]);
 
+  // 자동완성 API 호출
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!searchTerm.trim()) {
+        setSuggestions([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/autocomplete?q=${searchTerm}`);
+        const data = await res.json();
+        setSuggestions(data);
+      } catch (error) {
+        console.error('자동완성 API 오류:', error);
+        setSuggestions([]);
+      }
+    };
+
+    const delay = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(delay);
+  }, [searchTerm]);
+
   return (
     <>
       <Navbar />
       <div className="cart-container">
         {/* Left Sidebar */}
         <div className="left-sidebar">
-          <h2>검색</h2>
-          <input
-            type="text"
-            placeholder="장소 이름을 입력하세요"
-            className="search-input"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button
-            className="search-button"
-            onClick={() => setShowSearchResult(!showSearchResult)}
-          >
-            검색
-          </button>
+          {/* 🔍 검색창 */}
+          <div className="search-inline-box">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              className="search-input-full"
+              placeholder="장소를 검색하세요"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
+          {/* 자동완성 결과 */}
+          {suggestions.length > 0 && (
+            <ul className="autocomplete-list">
+              {suggestions.map((item, index) => (
+                <li
+                  key={index}
+                  onClick={() => {
+                    setSearchTerm(item);
+                    setSuggestions([]);
+                  }}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* 여행 정보 */}
           <h2>여행 정보</h2>
           {tripInfo ? (
             <ul>
@@ -61,17 +98,9 @@ const CartPage = () => {
           ) : (
             <p>여행 정보를 불러오는 중...</p>
           )}
-
-          {/* 검색 결과 (토글 표시) */}
-          {showSearchResult && (
-            <div className="search-result">
-              <p>🔍 "{searchTerm}" 검색 결과 표시 영역</p>
-              {/* 여기에 실제 결과 리스트를 map으로 출력 가능 */}
-            </div>
-          )}
         </div>
 
-        {/* Map + 장바구니 */}
+        {/* Map Section */}
         <div className="map-section">
           <div className="map-filters">
             <button>음식점</button>
@@ -81,6 +110,7 @@ const CartPage = () => {
           <div id="naver-map" className="map-box"></div>
         </div>
 
+        {/* Right Sidebar */}
         <div className="right-sidebar">
           <h3>내 일정</h3>
           <p>장바구니에 담긴 장소들이 여기에 표시됩니다.</p>
@@ -91,4 +121,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-
