@@ -1,12 +1,56 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState , useRef } from 'react';
 import Navbar from '../assets/components/Navbar';
 import '../assets/css/CartPage.css';
+import '../assets/css/Infowindow.css'
 import { getPlaces } from '../assets/components/Databaseapi.jsx';
 
 const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+
+
+  const mapRef = useRef(null); // 🆕 지도 인스턴스 저장용
+  const infoWindowRef = useRef(null); // 🆕 InfoWindow 인스턴스 저장용
+  const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
+
+  //info생성함수
+  const showInfoWindow = (map, marker, place) => {
+    const content = `
+      <div class="info-window">
+        <h4>${place.name}</h4>
+        <p>위도: ${place.lat.toFixed(6)}</p>
+        <p>경도: ${place.lng.toFixed(6)}</p>
+        <button class="info-add-btn">장바구니에 담기</button>
+      </div>
+    `;
+
+    infoWindowRef.current.setContent(content);
+    infoWindowRef.current.open(map, marker);
+  };
+
+
+
+  //마커 생성 함수
+  const createMarker = (place) => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current;
+    const position = new window.naver.maps.LatLng(place.lat, place.lng);
+    const marker = new window.naver.maps.Marker({
+      position,
+      map,
+      title: place.name,
+    });
+
+    // 마커 클릭 시 InfoWindow 표시
+    window.naver.maps.Event.addListener(marker, 'click', () => {
+      showInfoWindow(map, marker, place);
+    });
+
+    markersRef.current.push(marker);
+    map.setCenter(position); // 지도 이동
+  };
 
   //여행정보 불러오기
   useEffect(() => {
@@ -34,22 +78,87 @@ const CartPage = () => {
 
 
 
-
+  //네이버지도 초기화
   useEffect(() => {
-    if (window.naver && tripInfo) {
-      const { lat, lng } = tripInfo.region;
-      const mapOptions = {
-        center: new window.naver.maps.LatLng(lat, lng),
-        zoom: 13,
-      };
-      const map = new window.naver.maps.Map('naver-map', mapOptions);
-      new window.naver.maps.Marker({
-        position: new window.naver.maps.LatLng(lat, lng),
-        map,
-        title: tripInfo.region.name,
-      });
-    }
+    const initMap = async () => {
+      if (window.naver && tripInfo) {
+        const { lat, lng } = tripInfo.region;
+        const map = new window.naver.maps.Map('naver-map', {
+          center: new window.naver.maps.LatLng(lat, lng),
+          zoom: 13,
+        });
+        mapRef.current = map;
+  
+        new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(lat, lng),
+          map,
+          title: tripInfo.region.name,
+        });
+  
+        infoWindowRef.current = new window.naver.maps.InfoWindow({
+          content: '',
+          maxWidth: 300,
+        });
+  
+        const data = await getPlaces('');        // ✅ 모든 장소 불러오기
+        console.log("📦 전체 장소 응답:", data);
+        renderMarkersFromPlaces(data);           // ✅ 지도에 마커 표시
+      }
+    };
+  
+    initMap();
   }, [tripInfo]);
+  
+  //마커 생성 함수
+  const renderMarkersFromPlaces = (places) => {
+    if (!mapRef.current) return;
+  
+    const map = mapRef.current;
+    const regionName = tripInfo.region.name;
+    
+    // ✅ 해당 지역 이름이 포함된 장소만 필터링
+    const filteredPlaces = places.filter((place) =>
+      place.road_address?.toLowerCase().includes(regionName.toLowerCase())
+    );
+
+console.log(`📍 ${regionName} 지역 장소 개수:`, filteredPlaces.length);
+
+    // 기존 마커 제거
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+  
+    filteredPlaces.forEach((place, index) => {
+      const lat = place.lat || place.latitude;
+      const lng = place.lng || place.longitude;
+      const name = place.name || place.place_name;
+
+      const position = new window.naver.maps.LatLng(lat, lng);
+      const marker = new window.naver.maps.Marker({
+        position,
+        map,
+        title: name,
+      });
+  
+      window.naver.maps.Event.addListener(marker, 'click', () => {
+        const content = `
+          <div class="info-window">
+            <h4>${place.name}</h4>
+            <p>위도: ${place.lat.toFixed(6)}</p>
+            <p>경도: ${place.lng.toFixed(6)}</p>
+            <p>${place.description || '설명이 없습니다.'}</p>
+          </div>
+        `;
+        infoWindowRef.current.setContent(content);
+        infoWindowRef.current.open(map, marker);
+      });
+  
+      markersRef.current.push(marker);
+    });
+    console.log("📌 마커 생성 시작:", places.length, "개");
+    console.log("📍 첫 마커 좌표:", places[0]?.latitude, places[0]?.longitude);
+  };
+  
+
 
   return (
     <>
@@ -78,6 +187,7 @@ const CartPage = () => {
                     onClick={() => {
                       setSearchTerm(item.name);
                       setSuggestions([]);
+                      createMarker(item); // 🆕 마커 생성 호출
                     }}
                   >
                     {item.name}

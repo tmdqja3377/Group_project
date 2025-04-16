@@ -3,7 +3,9 @@ const API_KEY = import.meta.env.VITE_WEB_API_KEY;
 
 // 🔧 여기서 searchTerm을 매개변수로 받아야 함!
 export async function getPlaces(searchTerm) {
-  const url = `${API_URL}/api/places?q=${encodeURIComponent(searchTerm)}`;
+  const url = searchTerm
+  ? `${API_URL}/api/places?q=${encodeURIComponent(searchTerm)}`
+  : `${API_URL}/api/places`;
   console.log("🚀 [getPlaces] 요청 URL:", url);
 
   try {
