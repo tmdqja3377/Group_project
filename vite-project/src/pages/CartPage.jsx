@@ -5,10 +5,8 @@ import { getPlaces } from '../assets/components/Databaseapi.jsx';
 
 const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
-  const [places, setPlaces] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const selectedPlace = places.find(place => String(place.id) === "3");  // 데이터베이스에서 id 3번 정보를 가져옴
-  const [showSearchResult, setShowSearchResult] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   //여행정보 불러오기
   useEffect(() => {
@@ -20,12 +18,21 @@ const CartPage = () => {
 
   //데이터베이스 api 불러오기
   useEffect(() => {
-    if (tripInfo) {
-      getPlaces()
-        .then(data => setPlaces(data))
-        .catch(err => console.error('데이터 불러오기 실패:', err));
-    }
-  }, [tripInfo]);
+    const fetchSuggestions = async () => {
+      if (!searchTerm.trim()) {
+        setSuggestions([]);
+        return;
+      }
+      const data = await getPlaces(searchTerm);
+      console.log('✅ 자동완성 응답:', data);
+      setSuggestions(data);
+    };
+
+    const delay = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(delay);
+  }, [searchTerm]);
+
+
 
 
   useEffect(() => {
@@ -50,20 +57,35 @@ const CartPage = () => {
       <div className="cart-container">
         {/* Left Sidebar: 여행 정보 */}
         <div className="left-sidebar">
-          <h2>검색</h2>
-            <input
-              type="text"
-              placeholder="장소 이름을 입력하세요"
-              className="search-input"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button
-              className="search-button"
-              onClick={() => setShowSearchResult(!showSearchResult)}
-            >
-              검색
-            </button>
+            {/* 🔍 검색창 */}
+            <div className="search-inline-box">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                className="search-input-full"
+                placeholder="장소를 검색하세요"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* 자동완성 결과 */}
+            {suggestions.length > 0 && (
+              <ul className="autocomplete-list">
+                {suggestions.map((item, index) => (
+                  <li
+                    key={index}
+                    onClick={() => {
+                      setSearchTerm(item.name);
+                      setSuggestions([]);
+                    }}
+                  >
+                    {item.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <h2>여행 정보</h2>
             {tripInfo ? (
             <ul>
@@ -73,14 +95,6 @@ const CartPage = () => {
             </ul>
             ) : (
             <p>여행 정보를 불러오는 중...</p>
-            )}
-
-            {/* 검색 결과 (토글 표시) */}
-            {showSearchResult && (
-              <div className="search-result">
-                <p>🔍 "{searchTerm}" 검색 결과 표시 영역</p>
-                {/* 여기에 실제 결과 리스트를 map으로 출력 가능 */}
-              </div>
             )}
         </div>
 
@@ -98,26 +112,12 @@ const CartPage = () => {
           </div>
         </div>
         
-        {/* 임시 예제 id = 3번 데이터 불러와서 보여줌 */}
-        <div className="right-sidebar">
-          {selectedPlace ? (
-            <>
-              <h3>{selectedPlace.name}</h3>
-              <p><strong>주소:</strong> {selectedPlace.road_address}</p>
-              <p><strong>전화:</strong> {selectedPlace.phone}</p>
-              <p><strong>소개:</strong> {selectedPlace.intro}</p>
-            </>
-          ) : (
-            <p>관광지 정보를 찾을 수 없습니다.</p>
-          )}
-        </div>
-        
         {/* Right Sidebar: 장바구니 */}
-        {/* <div className="right-sidebar">
-            <h3>내 일정</h3> */}
+        <div className="right-sidebar">
+            <h3>내 일정</h3>
             {/* 여기에 장바구니 UI 추가 가능 */}
-            {/* <p>장바구니에 담긴 장소들이 여기에 표시됩니다.</p>
-        </div> */}
+            <p>장바구니에 담긴 장소들이 여기에 표시됩니다.</p>
+        </div>
       </div>
     </>
   );
