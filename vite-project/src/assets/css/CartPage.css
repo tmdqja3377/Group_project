@@ -84,3 +84,17 @@
   margin-top: 8px;
   color: #666;
   }
+
+  .info-window {
+    max-width: 90vw;         /* 화면 너비의 90%까지만 차지 */
+    width: 560px;            /* 원래 너비는 유지하되, 최대치 넘지 않게 */
+    position: relative;
+    font-size: 14px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    word-break: break-word;  /* 긴 단어도 줄바꿈되도록 */
+    box-sizing: border-box;
+  }
+  

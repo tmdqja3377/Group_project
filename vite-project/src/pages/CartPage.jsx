@@ -29,6 +29,14 @@ const CartPage = () => {
     infoWindowRef.current.open(map, marker);
   };
 
+  //infowindow X버튼
+  useEffect(() => {
+    window.closeInfoWindow = () => {
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
+      }
+    };
+  }, []);
 
 
   //마커 생성 함수
@@ -101,7 +109,6 @@ const CartPage = () => {
         });
   
         const data = await getPlaces('');        // ✅ 모든 장소 불러오기
-        console.log("📦 전체 장소 응답:", data);
         renderMarkersFromPlaces(data);           // ✅ 지도에 마커 표시
       }
     };
@@ -120,8 +127,6 @@ const CartPage = () => {
     const filteredPlaces = places.filter((place) =>
       place.road_address?.toLowerCase().includes(regionName.toLowerCase())
     );
-
-console.log(`📍 ${regionName} 지역 장소 개수:`, filteredPlaces.length);
 
     // 기존 마커 제거
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -142,20 +147,27 @@ console.log(`📍 ${regionName} 지역 장소 개수:`, filteredPlaces.length);
       window.naver.maps.Event.addListener(marker, 'click', () => {
         const content = `
           <div class="info-window">
-            <h4>${place.name}</h4>
-            <p>위도: ${place.lat.toFixed(6)}</p>
-            <p>경도: ${place.lng.toFixed(6)}</p>
-            <p>${place.description || '설명이 없습니다.'}</p>
+            <button onclick="window.closeInfoWindow()"
+              style="position:absolute; top:5px; right:10px; background:none; border:none; font-size:20px; cursor:pointer;">
+              ✕
+            </button>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+              <div style="width:140px;height:140px;background:#ddd;border-radius:4px;"></div>
+              <h3 style="margin:0;font-size:18px;">${place.name}</h3>
+            </div>
+            <p><strong>📍 도로명 주소:</strong> ${place.road_address || '정보 없음'}</p>
+            <p><strong>📌 지번 주소:</strong> ${place.lot_address || '정보 없음'}</p>
+            <p><strong>📞 연락처:</strong> ${place.phone || '없음'}</p>
+            <p><strong>📝 소개:</strong> ${place.intro || '설명 없음'}</p>
           </div>
         `;
+
         infoWindowRef.current.setContent(content);
         infoWindowRef.current.open(map, marker);
       });
-  
+
       markersRef.current.push(marker);
     });
-    console.log("📌 마커 생성 시작:", places.length, "개");
-    console.log("📍 첫 마커 좌표:", places[0]?.latitude, places[0]?.longitude);
   };
   
 
