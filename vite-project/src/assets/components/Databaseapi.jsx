@@ -6,7 +6,6 @@ export async function getPlaces(searchTerm) {
   const url = searchTerm
   ? `${API_URL}/api/places?q=${encodeURIComponent(searchTerm)}`
   : `${API_URL}/api/places`;
-  console.log("🚀 [getPlaces] 요청 URL:", url);
 
   try {
     const res = await fetch(url, {
@@ -19,5 +18,17 @@ export async function getPlaces(searchTerm) {
   } catch (err) {
     console.error('getPlaces 에러:', err);
     return [];
+  }
+}
+
+export async function getRegister(username, password) {
+  try {
+    const res = await axios.post(`${API_URL}/api/places`, {
+      username,
+      password
+    });
+    return res.data;  // 성공 메시지 반환
+  } catch (error) {
+    throw error.response?.data || error;
   }
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/LoginPage.css';
+import { getRegister } from '../assets/components/database';
 
 function LoginPage() {
     const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ function LoginPage() {
         });
     };
 
-    const validateForm = () => {
+    const registerForm = () => {
         const newErrors = {};
 
         if (!formData.username) {
@@ -70,7 +71,7 @@ function LoginPage() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
+        if (!registerForm()) {
             return;
         }
 
