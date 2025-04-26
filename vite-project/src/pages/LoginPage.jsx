@@ -3,15 +3,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/LoginPage.css';
-import { getRegister } from '../assets/components/database';
+import { registerUser } from '../assets/components/Databaseapi.jsx';
+import { loginUser } from '../assets/components/Databaseapi';
+
 
 function LoginPage() {
+
     const [formData, setFormData] = useState({
-        username: '',
+        userid: '',
         password: '',
         confirmPassword: '',
-        name: '',
-        email: ''
+        username: '',
     });
     const [isSignup, setIsSignup] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -34,8 +36,8 @@ function LoginPage() {
     const registerForm = () => {
         const newErrors = {};
 
-        if (!formData.username) {
-            newErrors.username = '아이디를 입력해주세요.';
+        if (!formData.userid) {
+            newErrors.userid = '아이디를 입력해주세요.';
         }
 
         if (!formData.password) {
@@ -54,54 +56,58 @@ function LoginPage() {
             newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
         }
 
-        if (isSignup && !formData.name) {
-            newErrors.name = '이름을 입력해주세요.';
+        if (isSignup && !formData.username) {
+            newErrors.username = '이름을 입력해주세요.';
         }
 
-        if (isSignup && !formData.email) {
-            newErrors.email = '이메일을 입력해주세요.';
-        } else if (isSignup && !/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = '유효한 이메일 주소를 입력해주세요.';
-        }
+        // if (isSignup && !formData.email) {
+        //     newErrors.email = '이메일을 입력해주세요.';
+        // } else if (isSignup && !/\S+@\S+\.\S+/.test(formData.email)) {
+        //     newErrors.email = '유효한 이메일 주소를 입력해주세요.';
+        // }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!registerForm()) {
             return;
         }
 
-        const storedUsers = JSON.parse(localStorage.getItem('users')) || {};
-
         if (isSignup) {
-            if (storedUsers[formData.username]) {
-                setErrors({ ...errors, username: '이미 사용 중인 아이디입니다.' });
-                return;
+            try {
+                //서버에 회원가입 요청 보내기
+                await registerUser(formData.userid, formData.username, formData.password);
+                //로그인 요청 보내기
+
+                alert('회원가입이 완료되었습니다. 로그인해주세요.');
+                setIsSignup(false);
+                setFormData({ userid: '', password: '', confirmPassword: '', username: ''});
+                setErrors({});
+            } catch (error) {
+                console.error("회원가입 에러 :", error);
+
+                if (error.error && error.error.includes('Duplicate entry')) {
+                    setErrors({ ...errors, userid: '이미 사용 중인 아이디입니다.' });
+                } else {
+                    alert('회원가입 실패: 서버 오류');
+                }
             }
-
-            storedUsers[formData.username] = {
-                password: formData.password,
-                name: formData.name,
-                email: formData.email
-            };
-
-            localStorage.setItem('users', JSON.stringify(storedUsers));
-            alert('회원가입이 완료되었습니다. 로그인해주세요.');
-            setIsSignup(false);
-            setFormData({ username: '', password: '', confirmPassword: '', name: '', email: '' });
-            setErrors({});
         } else {
-            const userData = storedUsers[formData.username];
-            if (userData && userData.password === formData.password) {
+            try {
+                console.log("🚀 /api/login 호출 시작!");
+                const res = await loginUser(formData.userid, formData.password);
+
+                alert(res.message);
                 localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('currentUser', formData.username);
+                localStorage.setItem('currentUser', formData.userid);
                 setIsLoggedIn(true);
                 navigate('/');
-            } else {
+            } catch (error) {
+                console.error('로그인 실패:', error);
                 alert('아이디 또는 비밀번호가 일치하지 않습니다.');
             }
         }
@@ -115,23 +121,24 @@ function LoginPage() {
                     <h2>{isSignup ? '회원가입' : '로그인'}</h2>
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <input type="text" name="username" placeholder="아이디" value={formData.username} onChange={handleChange} />
-                            {errors.username && <p className="error-message">{errors.username}</p>}
+                            <input type="text" name="userid" placeholder="아이디" value={formData.userid} onChange={handleChange} />
+                            {errors.userid && <p className="error-message">{errors.userid}</p>}
                         </div>
 
                         {isSignup && (
                             <div className="form-group">
-                                <input type="text" name="name" placeholder="이름" value={formData.name} onChange={handleChange} />
-                                {errors.name && <p className="error-message">{errors.name}</p>}
+                                <input type="text" name="username" placeholder="이름" value={formData.username} onChange={handleChange} />
+                                {errors.username && <p className="error-message">{errors.username}</p>}
                             </div>
                         )}
-
+                        {/*
                         {isSignup && (
                             <div className="form-group">
                                 <input type="email" name="email" placeholder="이메일" value={formData.email} onChange={handleChange} />
                                 {errors.email && <p className="error-message">{errors.email}</p>}
                             </div>
                         )}
+                        */}
 
                         <div className="form-group">
                             <input type="password" name="password" placeholder="비밀번호" value={formData.password} onChange={handleChange} />
@@ -149,7 +156,7 @@ function LoginPage() {
                     </form>
                     <p className="switch-auth" onClick={() => {
                         setIsSignup(!isSignup);
-                        setFormData({ username: '', password: '', confirmPassword: '', name: '', email: '' });
+                        setFormData({ userid: '', password: '', confirmPassword: '', username: ''});
                         setErrors({});
                     }}>
                         {isSignup ? '로그인하러 가기' : '회원가입하러 가기'}

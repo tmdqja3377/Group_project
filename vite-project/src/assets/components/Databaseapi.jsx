@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const API_URL = import.meta.env.VITE_WEB_API_URL;
 const API_KEY = import.meta.env.VITE_WEB_API_KEY;
 
@@ -21,9 +23,10 @@ export async function getPlaces(searchTerm) {
   }
 }
 
-export async function getRegister(username, password) {
+export async function registerUser(userid, username, password) {
   try {
-    const res = await axios.post(`${API_URL}/api/places`, {
+    const res = await axios.post(`${API_URL}/api/register`, {
+      userid,
       username,
       password
     });
@@ -32,3 +35,22 @@ export async function getRegister(username, password) {
     throw error.response?.data || error;
   }
 }
+
+
+export async function loginUser(userid, password) {
+  try {
+    const res = await axios.post(`${API_URL}/api/login`, {
+      userid,
+      password
+    }, {
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+    return res.data;  // 로그인 성공 메시지 반환
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+}
+
+
