@@ -8,10 +8,24 @@ function Navbar() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const loggedIn = localStorage.getItem('isLoggedIn');
-        setIsLoggedIn(loggedIn === 'true');
+        const checkLogin = () => {
+            const loggedIn = localStorage.getItem('isLoggedIn');
+            setIsLoggedIn(loggedIn === 'true');
+        };
+    
+        // 처음 로딩 때 체크
+        checkLogin();
+    
+        // localStorage 변화를 감지하는 리스너 추가
+        window.addEventListener('storage', checkLogin);
+    
+        // 컴포넌트 언마운트될 때 리스너 제거
+        return () => {
+            window.removeEventListener('storage', checkLogin);
+        };
     }, []);
 
+    
     //로그아웃 함수 생성
     const handleLogout = () => {
         localStorage.removeItem('isLoggedIn');

@@ -6,3 +6,5 @@ DELETE FROM usertable;
 ALTER TABLE usertable AUTO_INCREMENT = 1;
 
 ALTER TABLE usertable MODIFY COLUMN password varchar(60);
+
+ALTER TABLE usertable ADD COLUMN provider varchar(20) DEFAULT 'local'

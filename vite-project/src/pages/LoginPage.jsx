@@ -6,9 +6,19 @@ import '../assets/css/LoginPage.css';
 import { registerUser } from '../assets/components/Databaseapi.jsx';
 import { loginUser } from '../assets/components/Databaseapi';
 
+const N_CLIENT_ID = import.meta.env.VITE_NAVER_LOGIN_CLIENT_ID;
+const N_REDIRECT_URI = import.meta.env.VITE_NAVER_REDIRECT_URI;
+
 
 function LoginPage() {
+    //네이버 로그인 
+    const handleNaverLogin = () => {
+        const state = Math.random().toString(36).substring(2, 15);  // 랜덤 state
+        const naverLoginUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${N_CLIENT_ID}&state=${state}&redirect_uri=${N_REDIRECT_URI}`;
+        window.location.href = naverLoginUrl; //그냥 URL로 이동시킴
+    };
 
+    
     const [formData, setFormData] = useState({
         userid: '',
         password: '',
@@ -81,6 +91,10 @@ function LoginPage() {
             try {
                 //서버에 회원가입 요청 보내기
                 await registerUser(formData.userid, formData.username, formData.password);
+
+                const res = await loginUser(formData.userid, formData.username, formData.password);
+                window.location.href = `/login-success?userid=${encodeURIComponent(formData.userid)}&username=${encodeURIComponent(formData.username)}`;
+
                 //로그인 요청 보내기
 
                 alert('회원가입이 완료되었습니다. 로그인해주세요.');
@@ -99,13 +113,9 @@ function LoginPage() {
         } else {
             try {
                 console.log("🚀 /api/login 호출 시작!");
-                const res = await loginUser(formData.userid, formData.password);
+                const res = await loginUser(formData.userid, formData.username, formData.password);
+                window.location.href = `/login-success?userid=${encodeURIComponent(formData.userid)}&username=${encodeURIComponent(formData.username)}`;
 
-                alert(res.message);
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('currentUser', formData.userid);
-                setIsLoggedIn(true);
-                navigate('/');
             } catch (error) {
                 console.error('로그인 실패:', error);
                 alert('아이디 또는 비밀번호가 일치하지 않습니다.');
@@ -161,6 +171,7 @@ function LoginPage() {
                     }}>
                         {isSignup ? '로그인하러 가기' : '회원가입하러 가기'}
                     </p>
+                    <button onClick={handleNaverLogin}>네이버 로그인</button>
                 </div>
             </div>
         </>

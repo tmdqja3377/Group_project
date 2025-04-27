@@ -53,4 +53,12 @@ export async function loginUser(userid, password) {
   }
 }
 
+export async function getNaverUserInfo(code, state) {
+  const res = await axios.post(`${import.meta.env.VITE_WEB_API_URL}/api/naver-login`, {
+    code,
+    state
+  });
+  return res.data;
+}
+
 

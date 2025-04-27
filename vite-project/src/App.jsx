@@ -8,6 +8,8 @@ import Login from "./pages/LoginPage.jsx"
 import CartPage from "./pages/CartPage.jsx"
 import MyPage from './pages/MyPage.jsx';
 import AIPromptPage from './pages/AIPromptPage.jsx';
+import NaverCallback from './assets/components/Naverlogincallback.jsx'
+import LoginSuccess from './assets/components/LoginSuccess.jsx'
 
 
 
@@ -23,6 +25,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/Cart" element={<CartPage />} />
         <Route path="/chatbot" element={<AIPromptPage />} />
+        <Route path="/naver/callback" element={<NaverCallback />} />
+        <Route path="/login-success" element={<LoginSuccess />} />
       </Routes>
     </BrowserRouter>
     
