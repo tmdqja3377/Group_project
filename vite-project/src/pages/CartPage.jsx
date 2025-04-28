@@ -8,7 +8,7 @@ const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-
+  const [cartItems, setCartItems] = useState([]);
 
   const mapRef = useRef(null); // 🆕 지도 인스턴스 저장용
   const infoWindowRef = useRef(null); // 🆕 InfoWindow 인스턴스 저장용
@@ -38,6 +38,26 @@ const CartPage = () => {
     };
   }, []);
 
+  // 전역 addToCartItem 함수 등록
+  useEffect(() => {
+    window.addToCartItem = (encodedPlace) => {
+      const place = JSON.parse(decodeURIComponent(encodedPlace));
+      addToCart(place);
+    };
+  }, []);
+
+  // 장바구니에 추가
+  const addToCart = (place) => {
+    setCartItems(prev => {
+      if (prev.some(item => item.name === place.name)) return prev;
+      return [...prev, place];
+    });
+  };
+
+  // 장바구니에서 삭제
+  const handleDeleteCartItem = (index) => {
+    setCartItems(prev => prev.filter((_, i) => i !== index));
+  };  
 
   //마커 생성 함수
   const createMarker = (place) => {
@@ -59,7 +79,7 @@ const CartPage = () => {
     markersRef.current.push(marker);
     map.setCenter(position); // 지도 이동
   };
-
+  
   //여행정보 불러오기
   useEffect(() => {
     const storedTrip = localStorage.getItem('plannedTrip');
@@ -89,30 +109,45 @@ const CartPage = () => {
   //네이버지도 초기화
   useEffect(() => {
     const initMap = async () => {
-      if (window.naver && tripInfo) {
-        const { lat, lng } = tripInfo.region;
+      if (!tripInfo) return; // tripInfo 없으면 리턴
+
+      const { lat, lng } = tripInfo.region;
+
+      const createMap = () => { // ✅ 지도 생성 로직 분리
         const map = new window.naver.maps.Map('naver-map', {
           center: new window.naver.maps.LatLng(lat, lng),
           zoom: 13,
         });
         mapRef.current = map;
-  
+
         new window.naver.maps.Marker({
           position: new window.naver.maps.LatLng(lat, lng),
           map,
           title: tripInfo.region.name,
         });
-  
+
         infoWindowRef.current = new window.naver.maps.InfoWindow({
           content: '',
           maxWidth: 300,
         });
-  
-        const data = await getPlaces('');        // ✅ 모든 장소 불러오기
-        renderMarkersFromPlaces(data);           // ✅ 지도에 마커 표시
+      };
+
+      if (window.naver && window.naver.maps) {
+        createMap();
+        const data = await getPlaces('');
+        renderMarkersFromPlaces(data);
+      } else {
+        const interval = setInterval(async () => { // ✅ naver.maps가 뜰 때까지 대기
+          if (window.naver && window.naver.maps) {
+            clearInterval(interval);
+            createMap();
+            const data = await getPlaces('');
+            renderMarkersFromPlaces(data);
+          }
+        }, 100);
       }
     };
-  
+
     initMap();
   }, [tripInfo]);
   
@@ -159,6 +194,12 @@ const CartPage = () => {
             <p><strong>📌 지번 주소:</strong> ${place.lot_address || '정보 없음'}</p>
             <p><strong>📞 연락처:</strong> ${place.phone || '없음'}</p>
             <p><strong>📝 소개:</strong> ${place.intro || '설명 없음'}</p>
+
+            <button 
+              onclick="window.addToCartItem('${encodeURIComponent(JSON.stringify(place))}')" 
+              style="margin-top:10px;padding:8px 16px;background-color:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">
+              장바구니에 담기
+            </button>
           </div>
         `;
 
@@ -199,7 +240,6 @@ const CartPage = () => {
                     onClick={() => {
                       setSearchTerm(item.name);
                       setSuggestions([]);
-                      createMarker(item); // 🆕 마커 생성 호출
                     }}
                   >
                     {item.name}
@@ -236,9 +276,36 @@ const CartPage = () => {
         
         {/* Right Sidebar: 장바구니 */}
         <div className="right-sidebar">
-            <h3>내 일정</h3>
-            {/* 여기에 장바구니 UI 추가 가능 */}
-            <p>장바구니에 담긴 장소들이 여기에 표시됩니다.</p>
+        <h3>내 일정</h3>
+          {cartItems.length === 0 ? (
+            <p>장바구니에 담긴 장소가 없습니다.</p>
+          ) : (
+            <div className="cart-list">
+              {cartItems.map((item, index) => (
+                <div key={index} className="cart-item">
+                  {/* 이미지 */}
+                  <div className="cart-item-image">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.name} />
+                    ) : (
+                      <div className="placeholder-image" />
+                    )}
+                  </div>
+
+                  {/* 이름과 삭제 버튼 */}
+                  <div className="cart-item-info">
+                    <strong>{item.name}</strong>
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteCartItem(index)}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>
