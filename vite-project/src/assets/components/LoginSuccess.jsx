@@ -1,30 +1,30 @@
 // src/pages/LoginSuccessPage.jsx
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-function LoginSuccessPage() {
+function LoginSuccess() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const hasRun = useRef(false);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(location.search);
         const userid = params.get('userid');
-        const username = params.get('username');
+        const username = params.get('name');
 
         if (userid) {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', userid);
-            if (username) {
-                localStorage.setItem('username', username);
-            }
+            navigate('/');
+        } else {
+            alert('로그인 정보가 잘못되었습니다.');
+            navigate('/login');
         }
-
-        // 홈으로 자동 이동
-        navigate('/');
-    }, []);
+    }, [navigate, location]);
 
     return (
         <div>로그인 중...</div>
     );
 }
 
-export default LoginSuccessPage;
+export default LoginSuccess;
