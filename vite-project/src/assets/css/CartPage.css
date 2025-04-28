@@ -102,6 +102,23 @@
     word-break: break-word;  /* 긴 단어도 줄바꿈되도록 */
     box-sizing: border-box;
   }
+
+  .next-button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .next-button:hover {
+    background-color: #0056b3;
+  }
   
   /* 장바구니 항목 리스트 */
   .cart-list {

@@ -10,6 +10,7 @@ import MyPage from './pages/MyPage.jsx';
 import AIPromptPage from './pages/AIPromptPage.jsx';
 import NaverCallback from './assets/components/Naverlogincallback.jsx'
 import LoginSuccess from './assets/components/LoginSuccess.jsx'
+import ScheduleSummaryPage from './pages/ScheduleSummaryPage.jsx';
 
 
 
@@ -23,10 +24,11 @@ function App() {
         <Route path="/mypage" element={ <MyPage />} />
         <Route path="/location" element={<LocationListPage setIsLoggedIn={setIsLoggedIn} />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/Cart" element={<CartPage />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/chatbot" element={<AIPromptPage />} />
         <Route path="/naver/callback" element={<NaverCallback />} />
         <Route path="/login-success" element={<LoginSuccess />} />
+        <Route path="/schedule-summary" element={<ScheduleSummaryPage />} />
       </Routes>
     </BrowserRouter>
     

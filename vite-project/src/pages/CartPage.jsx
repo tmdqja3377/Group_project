@@ -3,6 +3,7 @@ import Navbar from '../assets/components/Navbar';
 import '../assets/css/CartPage.css';
 import '../assets/css/Infowindow.css'
 import { getPlaces } from '../assets/components/Databaseapi.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const CartPage = () => {
   const [tripInfo, setTripInfo] = useState(null);
@@ -13,7 +14,8 @@ const CartPage = () => {
   const mapRef = useRef(null); // 🆕 지도 인스턴스 저장용
   const infoWindowRef = useRef(null); // 🆕 InfoWindow 인스턴스 저장용
   const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
-
+  const navigate = useNavigate();
+  
   //info생성함수
   const showInfoWindow = (map, marker, place) => {
     const content = `
@@ -306,6 +308,9 @@ const CartPage = () => {
               ))}
             </div>
           )}
+          <button className="next-button" onClick={() => navigate('/schedule-summary')}>
+            다음
+          </button>
         </div>
       </div>
     </>
