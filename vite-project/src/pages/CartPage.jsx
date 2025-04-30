@@ -1,7 +1,7 @@
 import React, { useEffect, useState , useRef } from 'react';
 import Navbar from '../assets/components/Navbar';
 import '../assets/css/CartPage.css';
-import '../assets/css/Infowindow.css'
+import "../assets/css/DetailPanel.css";
 import { getPlaces } from '../assets/components/Databaseapi.jsx';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,35 +10,18 @@ const CartPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [cartItems, setCartItems] = useState([]);
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   const mapRef = useRef(null); // 🆕 지도 인스턴스 저장용
-  const infoWindowRef = useRef(null); // 🆕 InfoWindow 인스턴스 저장용
   const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
   const navigate = useNavigate();
   
-  //info생성함수
-  const showInfoWindow = (map, marker, place) => {
-    const content = `
-      <div class="info-window">
-        <h4>${place.name}</h4>
-        <p>위도: ${place.lat.toFixed(6)}</p>
-        <p>경도: ${place.lng.toFixed(6)}</p>
-        <button class="info-add-btn">장바구니에 담기</button>
-      </div>
-    `;
-
-    infoWindowRef.current.setContent(content);
-    infoWindowRef.current.open(map, marker);
+  //상세페이지 애니메이션 지우기
+  const closeDetailPanel = () => {
+    setShowDetailPanel(false);
+    setTimeout(() => setSelectedPlace(null), 300);
   };
-
-  //infowindow X버튼
-  useEffect(() => {
-    window.closeInfoWindow = () => {
-      if (infoWindowRef.current) {
-        infoWindowRef.current.close();
-      }
-    };
-  }, []);
 
   // 전역 addToCartItem 함수 등록
   useEffect(() => {
@@ -60,27 +43,6 @@ const CartPage = () => {
   const handleDeleteCartItem = (index) => {
     setCartItems(prev => prev.filter((_, i) => i !== index));
   };  
-
-  //마커 생성 함수
-  const createMarker = (place) => {
-    if (!mapRef.current) return;
-
-    const map = mapRef.current;
-    const position = new window.naver.maps.LatLng(place.lat, place.lng);
-    const marker = new window.naver.maps.Marker({
-      position,
-      map,
-      title: place.name,
-    });
-
-    // 마커 클릭 시 InfoWindow 표시
-    window.naver.maps.Event.addListener(marker, 'click', () => {
-      showInfoWindow(map, marker, place);
-    });
-
-    markersRef.current.push(marker);
-    map.setCenter(position); // 지도 이동
-  };
   
   //여행정보 불러오기
   useEffect(() => {
@@ -126,11 +88,6 @@ const CartPage = () => {
           position: new window.naver.maps.LatLng(lat, lng),
           map,
           title: tripInfo.region.name,
-        });
-
-        infoWindowRef.current = new window.naver.maps.InfoWindow({
-          content: '',
-          maxWidth: 300,
         });
       };
 
@@ -182,31 +139,8 @@ const CartPage = () => {
       });
   
       window.naver.maps.Event.addListener(marker, 'click', () => {
-        const content = `
-          <div class="info-window">
-            <button onclick="window.closeInfoWindow()"
-              style="position:absolute; top:5px; right:10px; background:none; border:none; font-size:20px; cursor:pointer;">
-              ✕
-            </button>
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-              <div style="width:140px;height:140px;background:#ddd;border-radius:4px;"></div>
-              <h3 style="margin:0;font-size:18px;">${place.name}</h3>
-            </div>
-            <p><strong>📍 도로명 주소:</strong> ${place.road_address || '정보 없음'}</p>
-            <p><strong>📌 지번 주소:</strong> ${place.lot_address || '정보 없음'}</p>
-            <p><strong>📞 연락처:</strong> ${place.phone || '없음'}</p>
-            <p><strong>📝 소개:</strong> ${place.intro || '설명 없음'}</p>
-
-            <button 
-              onclick="window.addToCartItem('${encodeURIComponent(JSON.stringify(place))}')" 
-              style="margin-top:10px;padding:8px 16px;background-color:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">
-              장바구니에 담기
-            </button>
-          </div>
-        `;
-
-        infoWindowRef.current.setContent(content);
-        infoWindowRef.current.open(map, marker);
+        setSelectedPlace(place);
+        setShowDetailPanel(true);
       });
 
       markersRef.current.push(marker);
@@ -271,9 +205,18 @@ const CartPage = () => {
             <button>명소</button>
             <button>카페</button>
             </div>
-            <div id="naver-map" className="map-box">
-            {/* 지도 삽입 위치 */}
-          </div>
+            <div id="naver-map" className="map-box"></div>
+            
+            {/* 상세 패널 */}
+            {selectedPlace && (
+              <div className={`detail-panel ${showDetailPanel ? "open" : ""}`}>
+                <button className="close-btn" onClick={closeDetailPanel}>×</button>
+                <h2>{selectedPlace.name}</h2>
+                <p><strong>📍 주소:</strong> {selectedPlace.road_address || "정보 없음"}</p>
+                <p><strong>📞 연락처:</strong> {selectedPlace.phone || "없음"}</p>
+                <p><strong>📝 소개:</strong> {selectedPlace.intro || "설명 없음"}</p>
+              </div>
+            )}
         </div>
         
         {/* Right Sidebar: 장바구니 */}
