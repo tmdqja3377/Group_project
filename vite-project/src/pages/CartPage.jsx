@@ -247,6 +247,13 @@ const CartPage = () => {
                 <p><strong>📍 주소:</strong> {selectedPlace.road_address || "정보 없음"}</p>
                 <p><strong>📞 연락처:</strong> {selectedPlace.phone || "없음"}</p>
                 <p><strong>📝 소개:</strong> {selectedPlace.intro || "설명 없음"}</p>
+
+                <button
+                  onClick={() => addToCartItem(JSON.stringify(selectedPlace))}
+                  className="add-to-cart-button"
+                >
+                  장바구니에 담기
+                </button>
               </div>
             )}
         </div>
