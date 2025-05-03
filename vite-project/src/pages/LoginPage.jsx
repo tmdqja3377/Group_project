@@ -114,6 +114,7 @@ function LoginPage() {
             try {
                 console.log("🚀 /api/login 호출 시작!");
                 const res = await loginUser(formData.userid, formData.password);
+                localStorage.setItem('loggedInUserId', res.userid);
                 window.location.href = `/login-success?userid=${encodeURIComponent(formData.userid)}}`;
 
             } catch (error) {
