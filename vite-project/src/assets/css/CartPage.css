@@ -10,7 +10,7 @@
   
   /* 왼쪽 여행 정보 */
   .left-sidebar {
-  width: 220px;
+  width: 330px;
   background-color: #ffffff;
   padding: 20px;
   border-right: 1px solid #ddd;
@@ -188,3 +188,59 @@
   align-self: flex-start;
   font-size: 12px;
 }
+
+/* 🔍 검색바 wrapper */
+.search-bar-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: white;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  padding: 0 10px;
+  cursor: pointer;
+  color: #888;
+}
+
+/* 🔽 자동완성 박스 */
+.autocomplete-box {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autocomplete-list {
+  list-style: none;
+  padding: 6px 0;
+  margin: 0;
+}
+
+.autocomplete-list li {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.autocomplete-list li:hover {
+  background-color: #f0f0f0;
+}
+

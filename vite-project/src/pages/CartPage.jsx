@@ -17,6 +17,29 @@ const CartPage = () => {
   const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
   const navigate = useNavigate();
   
+  const setMapCenter = (lat, lng) => {
+    if (mapRef.current) {
+      const newCenter = new window.naver.maps.LatLng(lat, lng);
+      mapRef.current.setCenter(newCenter);
+      mapRef.current.setZoom(16);
+    }
+  };
+
+  const handleSuggestionClick = (place) => {
+    setSearchTerm(place.name);
+    setSuggestions([]);
+    setSelectedPlace(place);
+    setShowDetailPanel(true);
+    setMapCenter(place.latitude, place.longitude);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (suggestions.length > 0) {
+      handleSuggestionClick(suggestions[0]);
+    }
+  };
+
   //상세페이지 애니메이션 지우기
   const closeDetailPanel = () => {
     setShowDetailPanel(false);
@@ -156,16 +179,25 @@ const CartPage = () => {
         {/* Left Sidebar: 여행 정보 */}
         <div className="left-sidebar">
             {/* 🔍 검색창 */}
-            <div className="search-inline-box">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
-                className="search-input-full"
-                placeholder="장소를 검색하세요"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            <form className="search-bar-wrapper" onSubmit={handleSearchSubmit}>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="장소를 검색하세요"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="clear-button"
+                onClick={() => setSearchTerm('')}
+              >
+                ×
+              </button>
+            )}
+            <button type="submit" className="search-button">검색</button>
+          </form>
 
             {/* 자동완성 결과 */}
             {suggestions.length > 0 && (
