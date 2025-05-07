@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../assets/components/Navbar.jsx';
 import CalendarComponent from '../assets/components/Datecalendar.jsx';
+import { createPlanner } from '../assets/components/Databaseapi.jsx';
 import '../assets/css/LocationListPage.css';
 
 function LocationListPage() {
@@ -22,15 +23,56 @@ function LocationListPage() {
     { name: '속초', lat: 38.2048, lng: 128.5912 },
   ];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedRegion || !startDate || !endDate || !travelers) {
       alert('지역, 날짜, 인원 수를 모두 선택해 주세요.');
       return;
     }
-    const tripData = { region: selectedRegion, startDate, endDate, travelers };
+
+    
+
+    const loggedInUserId = localStorage.getItem('loggedInUserId');
+    console.log('🧪 로그인된 사용자 ID:', loggedInUserId);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const tripData = {
+      region: selectedRegion,
+      startDate,
+      endDate,
+      travelers,
+    };
+
+    if (loggedInUserId) {
+      const plannerPayload = {
+        user_id: loggedInUserId,
+        title: `${selectedRegion.name} 여행`,
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        travelers,
+        region_name: selectedRegion.name,
+        lat: selectedRegion.lat,
+        lng: selectedRegion.lng,
+      };
+
+      try {
+        const result = await createPlanner(plannerPayload);
+
+        tripData.plannerId = result.planner_id;
+        
+      } catch (err) {
+        console.error('플래너 생성 실패:', err);
+        alert('여행 계획 저장 중 오류가 발생했습니다.');
+        return;
+      }
+    } else {
+      console.log('🔓 비로그인 사용자: localStorage에만 저장');
+    }
+
     localStorage.setItem('plannedTrip', JSON.stringify(tripData));
     window.location.href = '/Cart';
   };
+
+
 
   // 외부 클릭 감지 로직 임시 주석 처리
   useEffect(() => {

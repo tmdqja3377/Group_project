@@ -61,4 +61,82 @@ export async function getNaverUserInfo(code, state) {
   return res.data;
 }
 
+// 사용자 정보 불러오기
+export async function getUserInfo(userid) {
+  try {
+    const res = await axios.get(`${API_URL}/api/user-info`, {
+      params: { userid },
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('getUserInfo 에러:', err);
+    throw err;
+  }
+}
+
+// 사용자 탈퇴
+export async function deleteUser(userid) {
+  try {
+    const res = await axios.post(`${API_URL}/api/user-delete`, {
+      userid
+    }, {
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('deleteUser 에러:', err);
+    throw err;
+  }
+}
+
+// 사용자 정보 수정
+export async function updateUserProfile(data) {
+  try {
+    const res = await axios.post(`${API_URL}/api/user-update`, data, {
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('updateUserProfile 에러:', err);
+    throw err.response?.data || err;
+  }
+}
+
+// 비밀번호 변경
+export async function changeUserPassword(data) {
+  try {
+    const res = await axios.post(`${API_URL}/api/password-change`, data, {
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('changeUserPassword 에러:', err);
+    throw err.response?.data || err;
+  }
+}
+
+export async function createPlanner(tripData) {
+  try {
+    const res = await axios.post(`${API_URL}/api/planner/create`, tripData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY
+      }
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error('🛑 createPlanner 에러:', error);
+    throw error.response?.data || error;
+  }
+}
 

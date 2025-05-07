@@ -14,7 +14,7 @@ function LoginSuccess() {
 
         if (userid) {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', userid);
+            localStorage.setItem('loggedInUserId', userid);
             navigate('/');
         } else {
             alert('로그인 정보가 잘못되었습니다.');

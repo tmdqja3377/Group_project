@@ -82,28 +82,21 @@ function LoginPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (!registerForm()) {
             return;
         }
-
+    
         if (isSignup) {
             try {
-                //서버에 회원가입 요청 보내기
                 await registerUser(formData.userid, formData.username, formData.password);
-
-                const res = await loginUser(formData.userid, formData.username, formData.password);
-                window.location.href = `/login-success?userid=${encodeURIComponent(formData.userid)}&username=${encodeURIComponent(formData.username)}`;
-
-                //로그인 요청 보내기
-
+    
                 alert('회원가입이 완료되었습니다. 로그인해주세요.');
                 setIsSignup(false);
-                setFormData({ userid: '', password: '', confirmPassword: '', username: ''});
+                setFormData({ userid: '', password: '', confirmPassword: '', username: '' });
                 setErrors({});
             } catch (error) {
                 console.error("회원가입 에러 :", error);
-
                 if (error.error && error.error.includes('Duplicate entry')) {
                     setErrors({ ...errors, userid: '이미 사용 중인 아이디입니다.' });
                 } else {
@@ -111,10 +104,22 @@ function LoginPage() {
                 }
             }
         } else {
+            // ✅ 로그인 처리 시작
             try {
                 console.log("🚀 /api/login 호출 시작!");
-                const res = await loginUser(formData.userid, formData.password);
-                window.location.href = `/login-success?userid=${encodeURIComponent(formData.userid)}}`;
+                const response = await loginUser(formData.userid, formData.password);
+    
+                console.log("✅ 로그인 응답:", response);
+    
+                if (response.userid) {
+                    localStorage.setItem('loggedInUserId', response.userid);
+                    localStorage.setItem('isLoggedIn', 'true');
+                } else {
+                    alert('로그인 응답에서 userid를 찾을 수 없습니다.');
+                    return;
+                }
+    
+                window.location.href = `/login-success?userid=${encodeURIComponent(response.userid)}`;
 
             } catch (error) {
                 console.error('로그인 실패:', error);
