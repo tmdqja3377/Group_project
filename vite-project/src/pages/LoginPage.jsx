@@ -107,6 +107,7 @@ function LoginPage() {
             // ✅ 로그인 처리 시작
             try {
                 console.log("🚀 /api/login 호출 시작!");
+<<<<<<< HEAD
                 const response = await loginUser(formData.userid, formData.password);
     
                 console.log("✅ 로그인 응답:", response);
@@ -120,6 +121,11 @@ function LoginPage() {
                 }
     
                 window.location.href = `/login-success?userid=${encodeURIComponent(response.userid)}`;
+=======
+                const res = await loginUser(formData.userid, formData.password);
+                localStorage.setItem('loggedInUserId', res.userid);
+                window.location.href = `/login-success?userid=${encodeURIComponent(formData.userid)}}`;
+>>>>>>> 9e22fb38218e5b371413fca5329f51fd2cc69211
 
             } catch (error) {
                 console.error('로그인 실패:', error);
