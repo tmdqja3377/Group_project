@@ -140,21 +140,5 @@ export async function createPlanner(tripData) {
   }
 }
 
-export async function createPlanner(tripData) {
-  try {
-    const res = await axios.post(`${API_URL}/api/planner/create`, tripData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY
-      }
-    });
-
-    return res.data;
-  } catch (error) {
-    console.error('🛑 createPlanner 에러:', error);
-    throw error.response?.data || error;
-  }
-}
-
 
 
