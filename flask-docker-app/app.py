@@ -374,6 +374,79 @@ def change_password():
         cursor.close()
         conn.close()
 
+@app.route('/api/planner/add-item', methods=['POST'])
+@require_api_key
+def add_planner_item():
+    data = request.get_json()
+    user_id = data.get('userId')
+    planner_id = data.get('plannerId')
+    spot_id = data.get('spotId')
+    visit_date = data.get('visitDate')
+    sequence = data.get('sequence')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    spot_name = data.get('spotName')
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # planner_id가 plannners 테이블에 존재하는지 확인
+        cursor.execute("SELECT id FROM planners WHERE id = %s", (planner_id,))
+        planner = cursor.fetchone()
+        if not planner:
+            return jsonify({"error": "Invalid planner_id"}), 400  # 유효하지 않은 플래너 ID
+
+        # planner_items 테이블에 데이터 삽입
+        cursor.execute("""
+            INSERT INTO planner_items (planner_id, spot_id, visit_date, sequence, latitude, longitude, spotName)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            planner_id,
+            spot_id,
+            visit_date,
+            sequence,
+            latitude,
+            longitude,
+            spot_name
+        ))
+
+        conn.commit()
+        return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!"}), 201
+    except Exception as e:
+        print("플래너 항목 추가 실패:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/planner/delete-item/<int:item_id>', methods=['DELETE'])
+@require_api_key
+def delete_planner_item(item_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        print(f"item: {item_id}")
+
+        # planner_items 테이블에서 항목 삭제
+        cursor.execute("DELETE FROM planner_items WHERE spot_id = %s", (item_id,))
+        conn.commit()
+        print(f"플래너 항목 {item_id} 삭제됨")
+
+        # 삭제된 항목 확인
+        if cursor.rowcount > 0:
+            return jsonify({"message": f"플래너 항목 {item_id}가 삭제되었습니다!"}), 200
+        else:
+            return jsonify({"error": "삭제할 항목이 없습니다."}), 404
+
+    except Exception as e:
+        print("플래너 항목 삭제 실패:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

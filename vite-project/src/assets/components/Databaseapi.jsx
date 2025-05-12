@@ -140,5 +140,39 @@ export async function createPlanner(tripData) {
   }
 }
 
+//장바구니 항목추가
+export async function addPlannerItem(plannerItemData) {
+  try {
+    console.log("서버로 전송되는 데이터:", plannerItemData);
+    const res = await axios.post(`${API_URL}/api/planner/add-item`, plannerItemData, {
+      headers: {
+        'x-api-key': API_KEY,
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log("서버 응답:", res.data);
+    return res.data;  // 성공적인 응답 데이터 반환
+  } catch (error) {
+    console.error("플래너 아이템 추가 실패", error);
+    throw error;  // 오류 발생 시 throw로 상위 호출로 전달
+  }
+}
 
 
+//장바구니 항목삭제
+export async function deletePlannerItem(plannerItemId) {
+  try {
+    console.log("삭제되는 항목 ID:", plannerItemId); // 로그 추가: 삭제되는 항목 확인
+    const res = await axios.delete(`${API_URL}/api/planner/delete-item/${plannerItemId}`, {
+      headers: {
+        'x-api-key': API_KEY,
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log("서버 응답:", res.data); // 로그 추가: 서버 응답 확인
+    return res.data;  // 성공적인 응답 데이터 반환
+  } catch (error) {
+    console.error("플래너 항목 삭제 실패", error); // 오류 발생 시 로그
+    throw error;  // 오류 발생 시 throw로 상위 호출로 전달
+  }
+}
