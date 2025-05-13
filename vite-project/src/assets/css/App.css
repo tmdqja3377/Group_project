@@ -1,0 +1,27 @@
+/* App.css */
+/* ✅ 전체 페이지 공통 스타일만 유지 */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Noto Sans KR", sans-serif;
+    background-color: white;
+    height: 100%;
+    overflow-x: hidden;
+  
+    /* 왼쪽에서 오른쪽 그라데이션 */
+    background: linear-gradient(
+      to right,
+      rgba(255, 226, 171, 0.507) 0%,
+      #e9ecef 100%
+    );
+  }
+  
+  .App {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+  }
+  

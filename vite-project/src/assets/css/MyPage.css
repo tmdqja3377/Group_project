@@ -1,0 +1,463 @@
+/* src/pages/MyPage.css */
+
+.mypage-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 70px);
+    background-color: #f9f9f9;
+}
+
+.mypage-container h2 {
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.mypage-box {
+    background: #fff;
+    padding: 40px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(60, 60, 120, 0.1), 0 1.5px 4px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 800px;
+    margin: 200px 20px 20px 20px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    transition: box-shadow 0.3s;
+}
+.mypage-box:hover {
+    box-shadow: 0 12px 40px rgba(60, 60, 120, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.mypage-box h2 {
+    background: #000;
+    padding: 24px 40px 16px 40px;
+    margin: -40px -40px 0 -40px;
+    font-size: 26px;
+    color: #fff;
+    border-radius: 18px 18px 0 0;
+    box-shadow: none;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.mypage-content {
+    width: 100%;
+}
+
+.mypage-content p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.user-profile-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 36px;
+    margin-top: 24px;
+}
+
+.profile-image {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.profile-divider {
+    width: 1.5px;
+    height: 180px;
+    background: #e3e3e3;
+    margin: 0 24px;
+    align-self: center;
+    border-radius: 2px;
+}
+
+.profile-image img {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border: 3px solid #e3f0ff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(60, 60, 120, 0.1);
+    background: #f7faff;
+    transition: box-shadow 0.3s;
+}
+.profile-image img:hover {
+    box-shadow: 0 8px 32px rgba(60, 60, 120, 0.18);
+}
+
+.user-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.user-info p {
+    font-size: 17px;
+    color: #333;
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+.user-info strong {
+    color: #000;
+    font-weight: 600;
+}
+
+/* 모달(팝업) 스타일 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    margin: 20px;
+}
+
+.modal-body {
+    max-height: calc(90vh - 100px);
+    overflow-y: auto;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    font-size: 20px;
+    color: #000;
+    margin-bottom: 14px;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input,
+.form-group select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.save-btn,
+.cancel-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    flex: 1;
+    min-width: 120px;
+}
+
+.save-btn {
+    background-color: #4caf50;
+    color: white;
+}
+
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.save-btn:hover {
+    background-color: #45a049;
+}
+
+.cancel-btn:hover {
+    background-color: #da190b;
+}
+
+.profile-btn {
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s, color 0.2s;
+}
+.profile-btn:hover {
+    background: #333;
+    color: #fff;
+}
+
+.travel-plan-list {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto 40px auto;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+    scroll-behavior: smooth;
+    transition: overflow-x 0.3s;
+}
+
+.travel-plan-list:hover {
+    overflow-x: auto;
+}
+
+.travel-plan-list::-webkit-scrollbar {
+    height: 8px;
+}
+
+.travel-plan-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.travel-plan-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+.travel-plan-list::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.travel-card-list {
+    display: flex;
+    gap: 20px;
+    padding: 10px;
+    min-width: min-content;
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.travel-card {
+    background: #fff;
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 22px 24px 18px 24px;
+    min-width: 220px;
+    max-width: 320px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    transform: translateZ(0);
+}
+.travel-card:hover {
+    box-shadow: 0 6px 24px rgba(25, 118, 210, 0.16);
+    transform: translateY(-3px) scale(1.03);
+}
+.travel-card h4 {
+    margin: 0 0 7px 0;
+    color: #000;
+    font-size: 18px;
+    font-weight: 700;
+}
+.travel-card p {
+    margin: 0 0 3px 0;
+    font-size: 15px;
+    color: #222;
+}
+.travel-card .travel-desc {
+    color: #555;
+    font-size: 14px;
+    margin-top: 6px;
+}
+
+.profile-detail-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 16px;
+}
+
+.profile-detail-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #e3f0ff;
+    box-shadow: 0 4px 16px rgba(60, 60, 120, 0.1);
+}
+
+.profile-detail-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-detail-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-detail-info p {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.profile-detail-info strong {
+    color: #000;
+    font-weight: 600;
+    min-width: 80px;
+    display: inline-block;
+}
+
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.image-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #e3f0ff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-upload-input {
+    display: none;
+}
+
+.image-upload-button {
+    background: #000;
+    color: white !important;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+    max-width: 200px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.image-upload-button:hover {
+    background: #333;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.birth-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.birth-input-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.birth-input-item input {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.birth-input-item select {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 2.2;
+    text-align: center;
+    background-color: white;
+    cursor: pointer;
+}
+
+.birth-input-item select:focus {
+    outline: none;
+    border-color: #1976d2;
+}
+
+.birth-input-item span {
+    font-size: 14px;
+    color: #333;
+    min-width: 20px;
+}
+
+.birth-input-item input::placeholder {
+    text-align: center;
+}
+
+.birth-input-item input[type='number']::-webkit-inner-spin-button,
+.birth-input-item input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.birth-input-item input[type='number'] {
+    -moz-appearance: textfield;
+}

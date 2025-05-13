@@ -1,0 +1,12 @@
+ALTER TABLE planners MODIFY user_id VARCHAR(255) NOT NULL;
+
+
+ALTER TABLE planners DROP FOREIGN KEY planners_ibfk_1;
+ALTER TABLE planners MODIFY user_id VARCHAR(255) NOT NULL;
+ALTER TABLE planners
+ADD CONSTRAINT fk_userid FOREIGN KEY (user_id) REFERENCES usertable(userid);
+ALTER TABLE usertable ADD UNIQUE INDEX idx_userid (userid);
+
+DELETE FROM usertable
+WHERE id = 8
+LIMIT 1;

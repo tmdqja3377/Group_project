@@ -1,0 +1,261 @@
+/* 전체 페이지 3단 레이아웃 */
+.cart-container {
+  display: flex;
+  height: 100vh;
+  background-color: #fafafa;
+  padding-top: 60px;
+  box-sizing: border-box;
+  overflow: hidden;
+  }
+  
+  /* 왼쪽 여행 정보 */
+  .left-sidebar {
+  width: 330px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+  font-size: 14px;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  }
+  
+  /* 가운데 지도 영역 */
+  .map-section {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  }
+  
+  .map-filters {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 1;
+  }
+  /* 768px 이하일 때 세로 정렬로 변경 */
+  @media screen and (max-width: 768px) {
+  .map-filters {
+  flex-direction: column; /* 세로 정렬 */
+  width: fit-content; /* 내용물 크기에 맞춤 */
+  }
+  }
+  
+  .map-filters button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  }
+  
+  .map-filters button:hover {
+  background-color: #f0f0f0;
+  }
+  
+  .map-box {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  }
+  
+  /* 오른쪽 장바구니 */
+  .right-sidebar {
+    width: 260px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-left: 1px solid #ddd;
+    font-size: 14px;
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    
+    /* ✨ 추가 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .right-sidebar h3 {
+  margin-top: 0;
+  font-size: 16px;
+  }
+  
+  .right-sidebar p {
+  margin-top: 8px;
+  color: #666;
+  }
+
+  .info-window {
+    max-width: 90vw;         /* 화면 너비의 90%까지만 차지 */
+    width: 560px;            /* 원래 너비는 유지하되, 최대치 넘지 않게 */
+    position: relative;
+    font-size: 14px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    word-break: break-word;  /* 긴 단어도 줄바꿈되도록 */
+    box-sizing: border-box;
+  }
+
+  .next-button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .next-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* 장바구니 항목 리스트 */
+  .cart-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+  
+    /* ✨ 추가 */
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0; /* flex 안에서 스크롤 정상 작동하게 */
+  }
+
+/* 개별 장바구니 항목 카드 스타일 */
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+/* 장소 이미지 영역 */
+.cart-item-image {
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: #e0e0e0;
+  flex-shrink: 0;
+}
+
+/* 장소 이미지가 있을 때 스타일 */
+.cart-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 이미지 없을 때 기본 박스 */
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  background-color: #ccc;
+}
+
+/* 장소 이름 + 삭제버튼 영역 */
+.cart-item-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 삭제 버튼 스타일 */
+.delete-button {
+  margin-top: 4px;
+  padding: 4px 8px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-start;
+  font-size: 12px;
+}
+
+/* 🔍 검색바 wrapper */
+.search-bar-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: white;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  padding: 0 10px;
+  cursor: pointer;
+  color: #888;
+}
+
+/* 🔽 자동완성 박스 */
+.autocomplete-box {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autocomplete-list {
+  list-style: none;
+  padding: 6px 0;
+  margin: 0;
+}
+
+.autocomplete-list li {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.autocomplete-list li:hover {
+  background-color: #f0f0f0;
+}
+
+.add-to-cart-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.add-to-cart-button:hover {
+  background-color: #0069d9;
+}
