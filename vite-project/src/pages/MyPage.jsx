@@ -116,9 +116,10 @@ function UserInfo({ userData }) {
             </div>
             <div className="profile-divider"></div>
             <div className="user-info">
-                <p>
-                    <strong>이름:</strong> {userData.name}
-                </p>
+                <p><strong>ID:</strong> {userData.userid}</p>
+                <p><strong>닉네임:</strong> {userData.username}</p>
+                <p><strong>이름:</strong> {userData.name}</p>
+
                 <div style={{ display: 'flex', gap: '12px', marginTop: '18px' }}>
                     <button className="profile-btn" onClick={() => setShowDetail(true)}>
                         상세보기
@@ -127,16 +128,22 @@ function UserInfo({ userData }) {
                         수정하기
                     </button>
                 </div>
+
+                {/* 상세보기 모달 */}
                 <Modal open={showDetail} onClose={() => setShowDetail(false)} title="프로필 상세보기">
                     <div className="profile-detail-content">
                         <div className="profile-detail-image">
                             <img src={userData.profileImage || '/img/pro.png'} alt="프로필 이미지" />
                         </div>
                         <div className="profile-detail-info">
+                            <p><strong>ID:</strong> {userData.userid}</p>
+                            <p><strong>닉네임:</strong> {userData.username}</p>
                             <p><strong>이름:</strong> {userData.name}</p>
                         </div>
                     </div>
                 </Modal>
+
+                {/* 수정 모달 */}
                 <Modal open={showEdit} onClose={() => setShowEdit(false)} title="프로필 수정">
                     <div className="profile-edit-form">
                         <div className="form-group">
@@ -159,10 +166,12 @@ function UserInfo({ userData }) {
                                 </label>
                             </div>
                         </div>
+
                         <div className="form-group">
                             <label>이름</label>
                             <input type="text" name="name" value={editData.name || ''} onChange={handleInputChange} />
                         </div>
+
                         <div className="form-group">
                             <label>현재 비밀번호</label>
                             <input
@@ -193,6 +202,7 @@ function UserInfo({ userData }) {
                                 placeholder="새 비밀번호를 다시 입력하세요"
                             />
                         </div>
+
                         <div className="form-buttons">
                             <button className="save-btn" onClick={handlePasswordSave}>
                                 비밀번호 변경
@@ -210,6 +220,7 @@ function UserInfo({ userData }) {
         </div>
     );
 }
+
 
 function TravelCard({ plan }) {
     return (
