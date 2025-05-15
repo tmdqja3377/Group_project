@@ -96,8 +96,7 @@ function UserInfo({ userData }) {
     const handleSave = async () => {
         try {
             const updatedData = {
-                userid: userData.userid,
-                name: editData.name
+                userid: userData.userid
             };
             await updateUserProfile(updatedData);
             alert('프로필이 성공적으로 수정되었습니다.');
@@ -118,7 +117,6 @@ function UserInfo({ userData }) {
             <div className="user-info">
                 <p><strong>ID:</strong> {userData.userid}</p>
                 <p><strong>닉네임:</strong> {userData.username}</p>
-                <p><strong>이름:</strong> {userData.name}</p>
 
                 <div style={{ display: 'flex', gap: '12px', marginTop: '18px' }}>
                     <button className="profile-btn" onClick={() => setShowDetail(true)}>
@@ -138,7 +136,6 @@ function UserInfo({ userData }) {
                         <div className="profile-detail-info">
                             <p><strong>ID:</strong> {userData.userid}</p>
                             <p><strong>닉네임:</strong> {userData.username}</p>
-                            <p><strong>이름:</strong> {userData.name}</p>
                         </div>
                     </div>
                 </Modal>
@@ -165,11 +162,6 @@ function UserInfo({ userData }) {
                                     />
                                 </label>
                             </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>이름</label>
-                            <input type="text" name="name" value={editData.name || ''} onChange={handleInputChange} />
                         </div>
 
                         <div className="form-group">
