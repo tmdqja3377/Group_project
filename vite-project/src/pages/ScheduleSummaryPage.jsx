@@ -1,70 +1,88 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../assets/components/Navbar';
 import '../assets/css/ScheduleSummaryPage.css';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const API_URL = 'http://localhost:5001/api';
 const API_KEY = '3plus3equal_random';
 const userId = localStorage.getItem('loggedInUserId');
 
-function ScheduleSummaryPage() {
+function getDateRangeList(startDate, endDate) {
+    const result = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        result.push(d.toISOString().split('T')[0]);
+    }
+    return result;
+}
+
+const ScheduleSummaryPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const plannerId = location.state?.plannerId;
 
-    // cartItems와 schedule 완전 분리!
-    const [tripInfo] = useState(location.state?.tripInfo || null);
-    const [schedule, setSchedule] = useState({});
-    const [cartItems, setCartItems] = useState(location.state?.cartItems || []);
+    const [tripInfo, setTripInfo] = useState(null); // 여행정보(planners)
+    const [schedule, setSchedule] = useState({});   // 날짜별 일정
+    const [cartItems, setCartItems] = useState([]); // 배치 전 장바구니
     const [newDate, setNewDate] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    function getDateRangeList(startDate, endDate) {
-        const result = [];
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            result.push(d.toISOString().split('T')[0]);
-        }
-        return result;
-    }
-
+    // 최초 진입 시 DB에서 planner, planner_items 정보 조회
     useEffect(() => {
-        if (tripInfo && tripInfo.startDate && tripInfo.endDate) {
-            const dateList = getDateRangeList(tripInfo.startDate, tripInfo.endDate);
+        if (!plannerId) return;
+        // 1. 여행정보 불러오기 (planners)
+        axios.get(`${API_URL}/planner/info`, {
+            params: { plannerId },
+            headers: { 'x-api-key': API_KEY }
+        })
+        .then(res => {
+            setTripInfo(res.data);
+            // 날짜 배열로 schedule 초기화
+            const dateList = getDateRangeList(res.data.start_date, res.data.end_date);
             const newSchedule = {};
             dateList.forEach(date => { newSchedule[date] = []; });
             setSchedule(newSchedule);
-        }
-    }, [tripInfo]);
+        })
+        .catch(() => alert('여행 정보 로드 실패'));
 
-    // 드래그 핵심: schedule (날짜별), cartItems (내 일정) 각각 완전히 독립!
+        // 2. 장소목록 불러오기 (planner_items)
+        axios.get(`${API_URL}/planner/items`, {
+            params: { plannerId },
+            headers: { 'x-api-key': API_KEY }
+        })
+        .then(res => {
+            // 초기에는 모두 장바구니(cartItems)에 넣어둔다.
+            setCartItems(res.data.items || []);
+        })
+        .catch(() => alert('장소 정보 로드 실패'));
+    }, [plannerId]);
+
+    // 드래그 & 드롭 관련 로직
     const handleDragEnd = (result) => {
         const { source, destination } = result;
         if (!destination) return;
 
-        // cart(내 일정)에서 날짜로 이동
+        // cart → 날짜로 이동
         if (source.droppableId === 'cart' && schedule[destination.droppableId]) {
             const newCart = Array.from(cartItems);
             const [movedItem] = newCart.splice(source.index, 1);
-
             const newSchedule = { ...schedule };
             newSchedule[destination.droppableId] = [
-                ...newSchedule[destination.droppableId]
+                ...newSchedule[destination.droppableId],
             ];
             newSchedule[destination.droppableId].splice(destination.index, 0, movedItem);
-
             setCartItems(newCart);
             setSchedule(newSchedule);
             return;
         }
 
-        // 날짜에서 날짜로 이동
+        // 날짜 → 날짜
         if (schedule[source.droppableId] && schedule[destination.droppableId]) {
             const sourceItems = Array.from(schedule[source.droppableId]);
             const [movedItem] = sourceItems.splice(source.index, 1);
-
             const destItems = Array.from(schedule[destination.droppableId]);
             destItems.splice(destination.index, 0, movedItem);
 
@@ -76,7 +94,7 @@ function ScheduleSummaryPage() {
             return;
         }
 
-        // 날짜에서 cart(내 일정)로 이동
+        // 날짜 → cart
         if (schedule[source.droppableId] && destination.droppableId === 'cart') {
             const newSchedule = { ...schedule };
             const sourceItems = Array.from(schedule[source.droppableId]);
@@ -91,6 +109,7 @@ function ScheduleSummaryPage() {
         }
     };
 
+    // 날짜 추가
     const handleAddDate = () => {
         if (!newDate) return alert('날짜를 입력하세요.');
         if (schedule[newDate]) return alert('이미 존재하는 날짜입니다.');
@@ -98,12 +117,22 @@ function ScheduleSummaryPage() {
         setNewDate('');
     };
 
+    // 카트(장바구니)에서 제거
     const handleDeleteItem = (index) => {
         setCartItems(prev => prev.filter((_, i) => i !== index));
     };
 
+    // 날짜별 일정에서 삭제(→ 다시 카트로 이동)
+    const handleDeleteFromSchedule = (date, index) => {
+        setCartItems(prev => [...prev, schedule[date][index]]);
+        setSchedule(prev => ({
+            ...prev,
+            [date]: prev[date].filter((_, i) => i !== index),
+        }));
+    };
+
+    // 저장(일정 최종 확정)
     const handleSave = async () => {
-        // 유효성 검사
         if (
             Object.values(schedule).every((items) => items.length === 0)
         ) {
@@ -112,38 +141,22 @@ function ScheduleSummaryPage() {
         }
         setIsSaving(true);
         try {
-            // 1. 플래너 생성
-            const res = await axios.post(`${API_URL}/planner/create`, {
-                user_id: userId,
-                title: tripInfo.title || `${tripInfo.region?.name} 여행`,
-                start_date: tripInfo.startDate,
-                end_date: tripInfo.endDate,
-                travelers: tripInfo.travelers,
-                region_name: tripInfo.region?.name,
-                lat: tripInfo.region?.lat,
-                lng: tripInfo.region?.lng,
-            }, { headers: { 'x-api-key': API_KEY } });
-
-            const plannerId = res.data.planner_id;
-
-            // 2. 날짜별 장소 DB에 저장 (planner_items에)
+            // 날짜별 장소를 DB에 저장 (planner_items에 visit_date, sequence로)
             const savePromises = [];
             Object.entries(schedule).forEach(([date, items]) => {
                 items.forEach((item, idx) => {
                     savePromises.push(
-                        axios.post(`${API_URL}/planner/add-item`, {
-                            userId,
+                        axios.post(`${API_URL}/planner/add-item-simple`, {
                             plannerId,
-                            visitDate: date, // <--- 날짜별 visit_date!
-                            sequence: idx,
                             latitude: item.latitude,
                             longitude: item.longitude,
-                            spotName: item.name,
+                            spotName: item.spotName || item.name, // spotName이 없으면 name 사용
+                            visitDate: date,
+                            sequence: idx,
                         }, { headers: { 'x-api-key': API_KEY } })
                     );
                 });
             });
-
             await Promise.all(savePromises);
             alert('저장 완료!');
             navigate('/mypage');
@@ -155,6 +168,9 @@ function ScheduleSummaryPage() {
         }
     };
 
+    // DragDrop 라이브러리
+    
+
     return (
         <>
             <Navbar />
@@ -165,14 +181,14 @@ function ScheduleSummaryPage() {
                             <h2>📅 여행 계획 요약</h2>
                             {tripInfo && (
                                 <div className="trip-info">
-                                    <p><strong>지역:</strong> {tripInfo.region?.name}</p>
-                                    <p><strong>날짜:</strong> {tripInfo.startDate} ~ {tripInfo.endDate}</p>
+                                    <p><strong>지역:</strong> {tripInfo.region_name}</p>
+                                    <p><strong>날짜:</strong> {tripInfo.start_date} ~ {tripInfo.end_date}</p>
                                     <p><strong>인원수:</strong> {tripInfo.travelers}명</p>
                                 </div>
                             )}
-                        </div>
 
-                        {/* 날짜별 Droppable 영역 - sch- prefix만 사용 */}
+                        </div>
+                        {/* 날짜별 Droppable 영역 */}
                         {Object.keys(schedule).map((date) => (
                             <Droppable droppableId={date} key={date}>
                                 {(provided) => (
@@ -180,8 +196,8 @@ function ScheduleSummaryPage() {
                                         <h3>{date}</h3>
                                         {schedule[date].map((item, index) => (
                                             <Draggable
-                                                key={`sch-${date}-${item.spot_id ? item.spot_id : 'idx-' + index}`}
-                                                draggableId={`sch-${date}-${item.spot_id ? item.spot_id : 'idx-' + index}`}
+                                                key={`sch-${date}-${index}`}
+                                                draggableId={`sch-${date}-${index}`}
                                                 index={index}
                                             >
                                                 {(provided) => (
@@ -191,21 +207,12 @@ function ScheduleSummaryPage() {
                                                         {...provided.draggableProps}
                                                         {...provided.dragHandleProps}
                                                     >
-                                                        📍 {item.name}
-                                                        {/* ▼ 추가: 삭제 버튼 */}
+                                                        📍 {item.spotName || item.name}
                                                         <button
-                                                        className="delete-button"
-                                                        style={{ marginLeft: 8 }}
-                                                        onClick={() => {
-                                                          // 내 일정(카트)로 다시 보내기
-                                                          setCartItems(prev => [...prev, item]);
-                                                          // 현재 날짜 일정에서 삭제
-                                                          setSchedule(prev => ({
-                                                            ...prev,
-                                                            [date]: prev[date].filter((_, i) => i !== index)
-                                                          }));
-                                                          }}
-                                                          >삭제</button>
+                                                            className="delete-button"
+                                                            style={{ marginLeft: 8 }}
+                                                            onClick={() => handleDeleteFromSchedule(date, index)}
+                                                        >삭제</button>
                                                     </div>
                                                 )}
                                             </Draggable>
@@ -217,7 +224,7 @@ function ScheduleSummaryPage() {
                         ))}
                     </div>
 
-                    {/* 오른쪽 내 일정(장바구니) Droppable - cart- prefix만 사용 */}
+                    {/* 오른쪽 장바구니 */}
                     <div className="right-sidebar">
                         <h3>내 일정</h3>
                         <Droppable droppableId="cart">
@@ -228,8 +235,8 @@ function ScheduleSummaryPage() {
                                     ) : (
                                         cartItems.map((item, index) => (
                                             <Draggable
-                                                key={`cart-${item.spot_id ? item.spot_id : 'idx-' + index}`}
-                                                draggableId={`cart-${item.spot_id ? item.spot_id : 'idx-' + index}`}
+                                                key={`cart-${index}`}
+                                                draggableId={`cart-${index}`}
                                                 index={index}
                                             >
                                                 {(provided) => (
@@ -240,13 +247,11 @@ function ScheduleSummaryPage() {
                                                         {...provided.dragHandleProps}
                                                     >
                                                         <div className="cart-item-info">
-                                                            <strong>{item.name}</strong>
+                                                            <strong>{item.spotName || item.name}</strong>
                                                             <button
                                                                 className="delete-button"
                                                                 onClick={() => handleDeleteItem(index)}
-                                                            >
-                                                                삭제
-                                                            </button>
+                                                            >삭제</button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -269,6 +274,6 @@ function ScheduleSummaryPage() {
             </div>
         </>
     );
-}
+};
 
 export default ScheduleSummaryPage;

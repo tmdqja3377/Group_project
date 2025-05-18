@@ -364,7 +364,8 @@ const CartPage = () => {
               ))}
             </div>
           )}
-          <button className="next-button" onClick={() => navigate('/schedule-summary')}>
+          <button className="next-button" onClick={() => navigate('/schedule-summary', { state: { plannerId: tripInfo.plannerId } })
+          }>  
             다음
           </button>
         </div>
@@ -374,4 +375,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-
