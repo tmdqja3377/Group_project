@@ -6,9 +6,38 @@ from config import ACCESS_KEY, HOST, USER, PW, NAME, CLIENT, SECRET
 import bcrypt
 from mysql.connector.cursor import MySQLCursorDict
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
+# .env 또는 환경변수에서 API 키 불러오기
+@app.route('/api/google/proxy-place-details', methods=['GET'])
+def proxy_google_place_details():
+    place_name = request.args.get('place_name')
+    GOOGLE_API_KEY = os.getenv('VITE_GOOGLE_PLACES_API_KEY')
+    print(f"현재 GOOGLE_API_KEY:", GOOGLE_API_KEY)
+    if not place_name:
+        return jsonify({'error': 'Missing place_name parameter'}), 400
+
+    find_place_url = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json'
+    params = {'input': place_name, 'inputtype': 'textquery', 'fields': 'place_id', 'key': GOOGLE_API_KEY}
+    find_res = requests.get(find_place_url, params=params)
+    find_data = find_res.json()
+
+    if not find_data.get('candidates'):
+        return jsonify({'error': 'Place not found'}), 404
+
+    place_id = find_data['candidates'][0]['place_id']
+    details_url = 'https://maps.googleapis.com/maps/api/place/details/json'
+    details_params = {'place_id': place_id, 'fields': 'name,rating,reviews,photos','language': 'ko','key': GOOGLE_API_KEY}
+    details_res = requests.get(details_url, params=details_params)
+    details_data = details_res.json()
+
+    return jsonify(details_data.get('result', {}))
 
 # 연결테스트
 @app.route("/api/test")
@@ -374,51 +403,33 @@ def change_password():
         cursor.close()
         conn.close()
 
-@app.route('/api/planner/add-item', methods=['POST'])
+@app.route('/api/planner/add-item-simple', methods=['POST'])
 @require_api_key
-def add_planner_item():
+def add_planner_item_simple():
     data = request.get_json()
-    user_id = data.get('userId')
+    print(f"받은 데이터:", data)  # 🔥 이거 추가
+    
     planner_id = data.get('plannerId')
-    spot_id = data.get('spotId')
-    visit_date = data.get('visitDate')
-    sequence = data.get('sequence')
     latitude = data.get('latitude')
     longitude = data.get('longitude')
     spot_name = data.get('spotName')
-
+    
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        # planner_id가 plannners 테이블에 존재하는지 확인
-        cursor.execute("SELECT id FROM planners WHERE id = %s", (planner_id,))
-        planner = cursor.fetchone()
-        if not planner:
-            return jsonify({"error": "Invalid planner_id"}), 400  # 유효하지 않은 플래너 ID
-
-        # planner_items 테이블에 데이터 삽입
         cursor.execute("""
-            INSERT INTO planner_items (planner_id, spot_id, visit_date, sequence, latitude, longitude, spotName)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (
-            planner_id,
-            spot_id,
-            visit_date,
-            sequence,
-            latitude,
-            longitude,
-            spot_name
-        ))
-
+            INSERT INTO planner_items (planner_id, latitude, longitude, spotName)
+            VALUES (%s, %s, %s, %s)
+        """, (planner_id, latitude, longitude, spot_name))
         conn.commit()
         return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!"}), 201
     except Exception as e:
-        print("플래너 항목 추가 실패:", e)
+        print(f"플래너 항목 추가 실패:", e)  # 🔥 여기도 로그 꼭
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
         conn.close()
+
 
 @app.route('/api/planner/delete-item/<int:item_id>', methods=['DELETE'])
 @require_api_key
@@ -446,6 +457,9 @@ def delete_planner_item(item_id):
     finally:
         cursor.close()
         conn.close()
+
+
+
 
 
 if __name__ == '__main__':
