@@ -458,7 +458,25 @@ def delete_planner_item(item_id):
         cursor.close()
         conn.close()
 
+@app.route('/api/planner/info')
+def get_planner_info():
+    planner_id = request.args.get('plannerId')
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM planners WHERE id = %s", (planner_id,))
+        data = cursor.fetchone()
+    conn.close()
+    return jsonify(data)
 
+@app.route('/api/planner/items')
+def get_planner_items():
+    planner_id = request.args.get('plannerId')
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM planner_items WHERE planner_id = %s", (planner_id,))
+        data = cursor.fetchall()
+    conn.close()
+    return jsonify({'items': data})
 
 
 
