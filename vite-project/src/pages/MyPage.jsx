@@ -1,10 +1,16 @@
-// src/pages/MyPage.js
+// src/pages/MyPage.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/css/App.css';
 import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/MyPage.css';
-import { getUserInfo, deleteUser, updateUserProfile, changeUserPassword } from '../assets/components/Databaseapi.jsx';
+import {
+    getUserInfo,
+    deleteUser,
+    updateUserProfile,
+    changeUserPassword,
+    getUserPlanners, // 플래너 목록 API 임포트 추가!
+} from '../assets/components/Databaseapi.jsx';
 
 function Modal({ open, onClose, title, children }) {
     if (!open) return null;
@@ -19,6 +25,8 @@ function Modal({ open, onClose, title, children }) {
 }
 
 function UserInfo({ userData }) {
+    // ... (생략: 기존 UserInfo 코드와 동일, 수정 없음)
+    // 기존 코드 그대로 복사
     const [showDetail, setShowDetail] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [editData, setEditData] = useState({ ...userData });
@@ -213,55 +221,29 @@ function UserInfo({ userData }) {
     );
 }
 
-
-function TravelCard({ plan }) {
+// 플래너 카드 컴포넌트
+function PlannerCard({ planner }) {
     return (
         <div className="travel-card">
-            <h4>{plan.title}</h4>
+            <h4>{planner.title}</h4>
             <p>
-                <strong>여행 일자:</strong> {plan.date}
+                <strong>여행 일자:</strong> {planner.start_date} ~ {planner.end_date}
             </p>
             <p>
-                <strong>인원:</strong> {plan.people}명
+                <strong>인원:</strong> {planner.travelers}명
             </p>
-            <p className="travel-desc">{plan.desc}</p>
+            <p className="travel-desc">{planner.region_name}</p>
         </div>
     );
 }
 
 function MyPage() {
     const [userData, setUserData] = useState(null);
+    const [planners, setPlanners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const travelPlanListRef = useRef(null);
-
-    const travelPlans = [
-        {
-            title: '서울 여행 일정',
-            date: '2024-07-01 ~ 2024-07-03',
-            people: 3,
-            desc: '서울의 주요 명소와 맛집을 둘러보는 2박 3일 여행입니다.',
-        },
-        {
-            title: '부산 바다 여행',
-            date: '2024-08-10 ~ 2024-08-12',
-            people: 2,
-            desc: '해운대, 광안리 등 부산의 아름다운 해변을 즐기는 여행.',
-        },
-        {
-            title: '제주도 자연 여행',
-            date: '2024-09-15 ~ 2024-09-18',
-            people: 4,
-            desc: '한라산 등반과 제주의 아름다운 자연을 즐기는 3박 4일 여행.',
-        },
-        {
-            title: '경주 역사 여행',
-            date: '2024-10-05 ~ 2024-10-07',
-            people: 2,
-            desc: '경주의 유적지와 문화재를 탐방하는 2박 3일 여행.',
-        },
-    ];
 
     useEffect(() => {
         const loggedIn = localStorage.getItem('isLoggedIn');
@@ -270,18 +252,22 @@ function MyPage() {
         if (loggedIn !== 'true' || !userId) {
             navigate('/login');
         } else {
-            const fetchUser = async () => {
+            const fetchData = async () => {
                 try {
-                    const res = await getUserInfo(userId);
-                    setUserData(res);
+                    const userRes = await getUserInfo(userId);
+                    setUserData(userRes);
+
+                    // 사용자 플래너 목록 가져오기
+                    const plannerRes = await getUserPlanners(userId);
+                    setPlanners(plannerRes);
                 } catch (err) {
-                    console.error('사용자 정보 불러오기 실패:', err);
-                    setError('사용자 정보를 불러오지 못했습니다.');
+                    console.error('데이터 불러오기 실패:', err);
+                    setError('사용자 정보 또는 플래너를 불러오지 못했습니다.');
                 } finally {
                     setLoading(false);
                 }
             };
-            fetchUser();
+            fetchData();
         }
     }, [navigate]);
 
@@ -324,15 +310,23 @@ function MyPage() {
                     {userData && <UserInfo userData={userData} onDelete={handleDeleteUser} />}
                 </div>
             </div>
-            <div className="travel-plan-list" ref={travelPlanListRef}>
-                <div className="travel-card-list">
-                    {travelPlans.map((plan, index) => (
-                        <TravelCard key={index} plan={plan} />
-                    ))}
+            
+            {/* ▼▼▼ 프로필 하단에 사용자별 DB 플래너 목록 표시 ▼▼▼ */}
+            <div className="mypage-planner-section">
+                <h3>내 여행 플래너 목록</h3>
+                <div className="travel-plan-list" ref={travelPlanListRef}>
+                    <div className="travel-card-list">
+                        {planners.length === 0 && !loading && <p>플래너가 없습니다.</p>}
+                        {planners.map((planner) => (
+                            <PlannerCard key={planner.id} planner={planner} />
+                        ))}
+                    </div>
                 </div>
             </div>
+            {/* ▲▲▲ 플래너 목록 끝 ▲▲▲ */}
         </div>
     );
 }
 
 export default MyPage;
+

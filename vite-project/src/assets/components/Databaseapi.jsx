@@ -176,3 +176,19 @@ export async function deletePlannerItem(plannerItemId) {
     throw error;  // 오류 발생 시 throw로 상위 호출로 전달
   }
 }
+
+// 사용자별 플래너 목록 불러오기
+export async function getUserPlanners(userId) {
+  try {
+    const res = await axios.get(`${API_URL}/api/planners`, {
+      params: { user_id: userId },
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('getUserPlanners 에러:', err);
+    throw err;
+  }
+}
