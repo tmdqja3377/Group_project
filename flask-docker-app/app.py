@@ -413,14 +413,15 @@ def add_planner_item_simple():
     latitude = data.get('latitude')
     longitude = data.get('longitude')
     spot_name = data.get('spotName')
+    photo_reference = data.get('photoReference') 
     
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO planner_items (planner_id, latitude, longitude, spotName)
-            VALUES (%s, %s, %s, %s)
-        """, (planner_id, latitude, longitude, spot_name))
+  INSERT INTO planner_items (planner_id, latitude, longitude, spotName, photoReference)
+    VALUES (%s, %s, %s, %s, %s)
+    """, (planner_id, latitude, longitude, spot_name, photo_reference))
         conn.commit()
         return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!"}), 201
     except Exception as e:
@@ -457,6 +458,75 @@ def delete_planner_item(item_id):
     finally:
         cursor.close()
         conn.close()
+
+
+
+
+@app.route('/api/planner/list', methods=['GET'])
+def get_planner_list():
+    user_id = request.args.get('userId')
+    if not user_id:
+        print("❌ userId 파라미터 없음")
+        return jsonify({"error": "userId parameter is required"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, user_id, title, start_date, end_date, created_at, travelers, region_name, lat, lng
+            FROM planners
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+        """, (user_id,))
+        rows = cur.fetchall()
+        print(f"⭐ rows={rows}")
+
+        plans = []
+        for row in rows:
+            print("row=", row)
+            plans.append({
+                "id": row['id'],
+                "user_id": row['user_id'],
+                "title": row['title'],
+                "start_date": row['start_date'].strftime("%Y-%m-%d") if row['start_date'] else None,
+                "end_date": row['end_date'].strftime("%Y-%m-%d") if row['end_date'] else None,
+                "created_at": row['created_at'].strftime("%Y-%m-%d %H:%M:%S") if row['created_at'] else None,
+                "travelers": row['travelers'],
+                "region_name": row['region_name'],
+                "lat": row['lat'],
+                "lng": row['lng'],
+            })
+        return jsonify({"plans": plans})
+
+    except Exception as e:
+        import traceback
+        print("🔥 플래너 리스트 조회 오류:", e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+@app.route('/api/planner/items', methods=['GET'])
+def get_planner_items():
+    planner_id = request.args.get('plannerId')
+    if not planner_id:
+        return jsonify({'error': 'plannerId 파라미터가 필요합니다.'}), 400
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, planner_id, visit_date, latitude, longitude, spotName,photoReference
+                FROM planner_items
+                WHERE planner_id = %s
+                ORDER BY visit_date, sequence
+            """, (planner_id,))
+            items = cur.fetchall()
+        conn.close()
+        return jsonify({'items': items})
+    except Exception as e:
+        print("플래너 장소 불러오기 실패:", e)
+        return jsonify({'error': str(e)}), 500
+
 
 
 

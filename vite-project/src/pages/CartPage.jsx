@@ -81,27 +81,29 @@ const CartPage = () => {
   //여기까지 google API관련임
 
   //장바구니 추가 프론트 + 백앤드
+  // 대표사진 추출은 무조건 googlePlaceDetails에서!
   const handleAddToPlanner = async (place) => {
     if (!tripInfo || !tripInfo.plannerId) {
       alert('먼저 플래너를 생성해주세요!');
       return;
     }
-    try {
-      const userId = localStorage.getItem('loggedInUserId');
-      const plannerItemData = {
-        plannerId: tripInfo.plannerId,
-        latitude: place.geometry?.location?.lat() ?? 0,
-        longitude: place.geometry?.location?.lng() ?? 0,
-        spotName: place.name,
-      };
-      console.log("plannerItemData 확인:", plannerItemData);
-      await addPlannerItem(plannerItemData);  // 🔥 여기서 DB 저장 호출
-      
-      addToCart(place);  // 로컬 상태 업데이트
-    } catch (error) {
-      console.error('플래너 항목 저장 실패', error);
+    let photoReference = null;
+    if (googlePlaceDetails && googlePlaceDetails.photos && googlePlaceDetails.photos.length > 0) {
+      photoReference = googlePlaceDetails.photos[0].photo_reference;
     }
-  }; 
+    const plannerItemData = {
+      plannerId: tripInfo.plannerId,
+      latitude: place.geometry?.location?.lat() ?? 0,
+      longitude: place.geometry?.location?.lng() ?? 0,
+      spotName: place.name,
+      photoReference,
+    };
+    console.log("plannerItemData 확인:", plannerItemData);
+    await addPlannerItem(plannerItemData);
+    addToCart({ ...place, photoReference });
+  };
+
+     
 
   // 장바구니에 추가
   const addToCart = (place) => {
@@ -293,12 +295,13 @@ const CartPage = () => {
                     ➖ 장바구니에서 제거
                   </button>
                 ) : (
-                  <button
-                    className="add-to-cart-button"
-                    onClick={() => handleAddToPlanner(selectedPlace)}
-                  >
-                    ➕ 장바구니에 담기
-                  </button>
+                    <button
+                      className="add-to-cart-button"
+                      onClick={() => handleAddToPlanner(selectedPlace)}
+                      disabled={!googlePlaceDetails || !googlePlaceDetails.photos || googlePlaceDetails.photos.length === 0}
+                    >
+                      ➕ 장바구니에 담기
+                    </button>
                 )}
               </div>
 

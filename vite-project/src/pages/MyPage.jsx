@@ -5,6 +5,7 @@ import '../assets/css/App.css';
 import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/MyPage.css';
 import { getUserInfo, deleteUser, updateUserProfile, changeUserPassword } from '../assets/components/Databaseapi.jsx';
+import axios from 'axios';
 
 function Modal({ open, onClose, title, children }) {
     if (!open) return null;
@@ -222,20 +223,16 @@ function UserInfo({ userData }) {
 }
 
 
-function TravelCard({ plan }) {
+function TravelCard({ plan, onClick }) {
     return (
-        <div className="travel-card">
+        <div className="travel-card" onClick={onClick} style={{ cursor: 'pointer' }}>
             <h4>{plan.title}</h4>
-            <p>
-                <strong>여행 일자:</strong> {plan.date}
-            </p>
-            <p>
-                <strong>인원:</strong> {plan.people}명
-            </p>
-            <p className="travel-desc">{plan.desc}</p>
+            <p><strong>여행일자:</strong> {plan.start_date} ~ {plan.end_date}</p>
+            <p><strong>인원:</strong> {plan.travelers}명</p>
+            <p className="travel-desc"><strong>지역:</strong> {plan.region_name}</p>
         </div>
     );
-}
+  }
 
 function MyPage() {
     const [userData, setUserData] = useState(null);
@@ -244,34 +241,22 @@ function MyPage() {
     const navigate = useNavigate();
     const travelPlanListRef = useRef(null);
 
-    const travelPlans = [
-        {
-            title: '서울 여행 일정',
-            date: '2024-07-01 ~ 2024-07-03',
-            people: 3,
-            desc: '서울의 주요 명소와 맛집을 둘러보는 2박 3일 여행입니다.',
-        },
-        {
-            title: '부산 바다 여행',
-            date: '2024-08-10 ~ 2024-08-12',
-            people: 2,
-            desc: '해운대, 광안리 등 부산의 아름다운 해변을 즐기는 여행.',
-        },
-        {
-            title: '제주도 자연 여행',
-            date: '2024-09-15 ~ 2024-09-18',
-            people: 4,
-            desc: '한라산 등반과 제주의 아름다운 자연을 즐기는 3박 4일 여행.',
-        },
-        {
-            title: '경주 역사 여행',
-            date: '2024-10-05 ~ 2024-10-07',
-            people: 2,
-            desc: '경주의 유적지와 문화재를 탐방하는 2박 3일 여행.',
-        },
-    ];
+    const [travelPlans, setTravelPlans] = useState([]);
+
 
     useEffect(() => {
+
+        const fetchPlans = async () => {
+            try {
+                const userId = localStorage.getItem('loggedInUserId');
+                // 실제 API 경로/응답 구조에 맞게 수정!
+                const res = await axios.get(`http://localhost:5001/api/planner/list?userId=${userId}`);
+                setTravelPlans(res.data.plans); // plans 배열로 내려오도록 백엔드에서 맞춰주세요!
+            } catch (err) {
+                console.error('여행 일정 불러오기 실패:', err);
+            }
+        };
+        fetchPlans();
         const loggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('loggedInUserId');
 
@@ -334,12 +319,16 @@ function MyPage() {
             </div>
             <div className="travel-plan-list" ref={travelPlanListRef}>
                 <div className="travel-card-list">
-                    {travelPlans.map((plan, index) => (
-                        <TravelCard key={index} plan={plan} />
+                    {travelPlans.map((plan, idx) => (
+                        <TravelCard
+                            key={plan.id || idx}
+                            plan={plan}
+                            onClick={() => navigate('/schedule-summary', { state: { plannerId: plan.id } })}
+                        />
                     ))}
                 </div>
             </div>
-        </div>
+        </div>   
     );
 }
 
