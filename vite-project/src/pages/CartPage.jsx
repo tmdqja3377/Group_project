@@ -6,63 +6,131 @@ import { getPlaces, addPlannerItem, deletePlannerItem } from '../assets/componen
 import { useNavigate } from 'react-router-dom';
 
 const CartPage = () => {
+  const [googlePlaceDetails, setGooglePlaceDetails] = useState(null);
   const [tripInfo, setTripInfo] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
+  const [activeTab, setActiveTab] = useState('photos');
+  const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
+  const [category, setCategory] = useState('restaurant');
+  const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+
 
   const mapRef = useRef(null); // 🆕 지도 인스턴스 저장용
   const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
   const navigate = useNavigate();
 
-  // 장바구니에서 삭제
-  const handleDeleteCartItem = async (index) => {
-    const itemToDelete = cartItems[index];
+  //구글 API관련
+  const fetchGooglePlaceDetails = async (placeName, setGooglePlaceDetails) => {
     try {
-      // 데이터베이스에서 항목 삭제
-      await deletePlannerItem(itemToDelete.id); // 항목의 id를 기반으로 삭제
-
-      // 장바구니에서 항목 삭제
-      setCartItems(prev => prev.filter((_, i) => i !== index));
-      console.log(`플래너 항목 ${itemToDelete.name}이 삭제되었습니다!`);
+      const res = await fetch(`http://localhost:5001/api/google/proxy-place-details?place_name=${encodeURIComponent(placeName)}`);
+      const data = await res.json();
+      setGooglePlaceDetails(data);
     } catch (error) {
-      console.error("플래너 항목 삭제 실패", error);
+      console.error('구글 장소 정보 조회 실패:', error);
+      setGooglePlaceDetails(null);
     }
   };
 
-  // 방문 날짜와 순서를 추가하여 플래너 아이템 데이터 구조화
+  const handleMarkerClick = (place) => {
+    setSelectedPlace(place);
+    setActiveTab('photos');
+    setIsInfoPanelVisible(true);
+    fetchGooglePlaceDetails(place.name, setGooglePlaceDetails);
+  };
+
+  const loadPlaces = (map, selectedCategory) => {
+    const center = map.getCenter();
+    const service = new window.google.maps.places.PlacesService(map);
+    service.nearbySearch({ location: center, radius: 5000, type: selectedCategory }, (results, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+        markersRef.current.forEach((marker) => marker.setMap(null));
+        markersRef.current = [];
+        results.forEach((place) => {
+          const marker = new window.google.maps.Marker({
+            map,
+            position: place.geometry.location,
+            title: place.name,
+          });
+          marker.addListener('click', () => handleMarkerClick(place));
+          markersRef.current.push(marker);
+        });
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!window.google) return;
+    const center = { lat: 37.5665, lng: 126.9780 };
+    const map = new window.google.maps.Map(document.getElementById('google-map'), {
+      center,
+      zoom: 13,
+    });
+    mapRef.current = map;
+    loadPlaces(map, category);
+  }, []);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      loadPlaces(mapRef.current, category);
+    }
+  }, [category]);
+  //여기까지 google API관련임
+
+  //장바구니 추가 프론트 + 백앤드
   const handleAddToPlanner = async (place) => {
-    try {
-      const userId = localStorage.getItem('loggedInUserId'); // 로그인된 사용자의 ID 가져오기
-      const visitDate = '2024-07-01';  // 예시: 방문 날짜
-      const sequence = 1;  // 예시: 순서 (각각의 관광지가 장바구니에 담긴 순서)
-
-      const plannerItemData = {
-        userId,
-        plannerId: tripInfo.plannerId, // 플래너 ID (예시: tripInfo에서 가져오기)
-        spotId: place.id, // 관광지 ID
-        visitDate, // 방문 날짜
-        sequence, // 방문 순서
-        latitude: place.latitude, // 위도
-        longitude: place.longitude, // 경도
-        spotName: place.name, // 장소 이름
-      };
-
-      console.log("전송되는 데이터:", plannerItemData); // 로그 추가: 전송될 데이터 확인
-
-      // 백엔드 API 호출하여 플래너 아이템 저장
-      await addPlannerItem(plannerItemData);
-      console.log("플래너 항목이 저장되었습니다!");
-
-      addToCart(place);
-
-    } catch (error) {
-      console.error("플래너 항목 저장 실패", error);
+    if (!tripInfo || !tripInfo.plannerId) {
+      alert('먼저 플래너를 생성해주세요!');
+      return;
     }
+    try {
+      const userId = localStorage.getItem('loggedInUserId');
+      const plannerItemData = {
+        plannerId: tripInfo.plannerId,
+        latitude: place.geometry?.location?.lat() ?? 0,
+        longitude: place.geometry?.location?.lng() ?? 0,
+        spotName: place.name,
+      };
+      console.log("plannerItemData 확인:", plannerItemData);
+      await addPlannerItem(plannerItemData);  // 🔥 여기서 DB 저장 호출
+      
+      addToCart(place);  // 로컬 상태 업데이트
+    } catch (error) {
+      console.error('플래너 항목 저장 실패', error);
+    }
+  }; 
+
+  // 장바구니에 추가
+  const addToCart = (place) => {
+    setCartItems((prev) => {
+      if (prev.some((item) => item.name === place.name)) {
+        alert("이미 장바구니에 담은 장소입니다.");
+        return prev;
+      }
+      const photoReference = googlePlaceDetails?.photos?.[0]?.photo_reference || null;
+      return [...prev, { ...place, photoReference }];
+    });
   };
 
+
+
+  // 장바구니에서 삭제
+  // const handleDeleteCartItem = async (index) => {
+  //   const itemToDelete = cartItems[index];
+  //   try {
+  //     // 데이터베이스에서 항목 삭제
+  //     await deletePlannerItem(itemToDelete.id); // 항목의 id를 기반으로 삭제
+
+  //     // 장바구니에서 항목 삭제
+  //     setCartItems(prev => prev.filter((_, i) => i !== index));
+  //     console.log(`플래너 항목 ${itemToDelete.name}이 삭제되었습니다!`);
+  //   } catch (error) {
+  //     console.error("플래너 항목 삭제 실패", error);
+  //   }
+  // };
 
   const setMapCenter = (lat, lng) => {
     if (mapRef.current) {
@@ -93,26 +161,19 @@ const CartPage = () => {
     setTimeout(() => setSelectedPlace(null), 300);
   };
 
-  // 전역 addToCartItem 함수 등록
-  useEffect(() => {
-    window.addToCartItem = (encodedPlace) => {
-      const place = JSON.parse(decodeURIComponent(encodedPlace));
-      addToCart(place);
-    };
-  }, []);
+  // // 전역 addToCartItem 함수 등록
+  // useEffect(() => {
+  //   window.addToCartItem = (encodedPlace) => {
+  //     const place = JSON.parse(decodeURIComponent(encodedPlace));
+  //     addToCart(place);
+  //   };
+  // }, []);
 
-  // 장바구니에 추가
-  const addToCart = (place) => {
-    setCartItems(prev => {
-      if (prev.some(item => item.name === place.name)) return prev;
-      return [...prev, place];
-    });
-  };
 
   // 장바구니에서 삭제
-  const DeleteCartItem = (index) => {
-    setCartItems(prev => prev.filter((_, i) => i !== index));
-  };  
+  // const DeleteCartItem = (index) => {
+  //   setCartItems(prev => prev.filter((_, i) => i !== index));
+  // };  
   
   //여행정보 불러오기
   useEffect(() => {
@@ -137,85 +198,6 @@ const CartPage = () => {
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
   }, [searchTerm]);
-
-
-
-  //네이버지도 초기화
-  useEffect(() => {
-    const initMap = async () => {
-      if (!tripInfo) return; // tripInfo 없으면 리턴
-
-      const { lat, lng } = tripInfo.region;
-
-      const createMap = () => { // ✅ 지도 생성 로직 분리
-        const map = new window.naver.maps.Map('naver-map', {
-          center: new window.naver.maps.LatLng(lat, lng),
-          zoom: 13,
-        });
-        mapRef.current = map;
-
-        new window.naver.maps.Marker({
-          position: new window.naver.maps.LatLng(lat, lng),
-          map,
-          title: tripInfo.region.name,
-        });
-      };
-
-      if (window.naver && window.naver.maps) {
-        createMap();
-        const data = await getPlaces('');
-        renderMarkersFromPlaces(data);
-      } else {
-        const interval = setInterval(async () => { // ✅ naver.maps가 뜰 때까지 대기
-          if (window.naver && window.naver.maps) {
-            clearInterval(interval);
-            createMap();
-            const data = await getPlaces('');
-            renderMarkersFromPlaces(data);
-          }
-        }, 100);
-      }
-    };
-
-    initMap();
-  }, [tripInfo]);
-  
-  //마커 생성 함수
-  const renderMarkersFromPlaces = (places) => {
-    if (!mapRef.current) return;
-  
-    const map = mapRef.current;
-    const regionName = tripInfo.region.name;
-    
-    // ✅ 해당 지역 이름이 포함된 장소만 필터링
-    const filteredPlaces = places.filter((place) =>
-      place.road_address?.toLowerCase().includes(regionName.toLowerCase())
-    );
-
-    // 기존 마커 제거
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
-  
-    filteredPlaces.forEach((place, index) => {
-      const lat = place.lat || place.latitude;
-      const lng = place.lng || place.longitude;
-      const name = place.name || place.place_name;
-
-      const position = new window.naver.maps.LatLng(lat, lng);
-      const marker = new window.naver.maps.Marker({
-        position,
-        map,
-        title: name,
-      });
-  
-      window.naver.maps.Event.addListener(marker, 'click', () => {
-        setSelectedPlace(place);
-        setShowDetailPanel(true);
-      });
-
-      markersRef.current.push(marker);
-    });
-  };
   
 
 
@@ -277,62 +259,107 @@ const CartPage = () => {
 
         
 
-        {/* Map section: 네이버 지도 + 필터 버튼 (가운데) */}
+        {/* Map section: 네이버 지도 + 필터 버튼 (가운데) -> 구글지도로 바꿈 */}
         <div className="map-section">
           <div className="map-filters">
-            <button>음식점</button>
-            <button>명소</button>
-            <button>카페</button>
-            </div>
-            <div id="naver-map" className="map-box"></div>
-            
-            {/* 상세 패널 */}
-            {selectedPlace && (
-              <div className={`detail-panel ${showDetailPanel ? "open" : ""}`}>
-                <button className="close-btn" onClick={closeDetailPanel}>×</button>
-                <h2>{selectedPlace.name}</h2>
-                <p><strong>📍 주소:</strong> {selectedPlace.road_address || "정보 없음"}</p>
-                <p><strong>📞 연락처:</strong> {selectedPlace.phone || "없음"}</p>
-                <p><strong>📝 소개:</strong> {selectedPlace.intro || "설명 없음"}</p>
+            <button onClick={() => setCategory('restaurant')}>🍽 음식점</button>
+            <button onClick={() => setCategory('tourist_attraction')}>📍 명소</button>
+            <button onClick={() => setCategory('cafe')}>☕ 카페</button>
+            <button onClick={() => setCategory('lodging')}>🏨 숙소</button>
+            <button onClick={() => setCategory('all')}>🌐 전체</button>
+          </div>
+          <div id="google-map" className="map-box"></div>
 
-                <button
-                  onClick={() => handleAddToPlanner(selectedPlace)}
-                  className="add-to-cart-button"
-                >
-                  장바구니에 담기
-                </button>
+          {selectedPlace && (
+            <div className={`info-panel ${isInfoPanelVisible ? 'visible' : ''}`}>
+              <div className="tab-buttons">
+                <button onClick={() => setActiveTab('photos')} className={activeTab === 'photos' ? 'active' : ''}>📸 사진</button>
+                <button onClick={() => setActiveTab('reviews')} className={activeTab === 'reviews' ? 'active' : ''}>💬 리뷰</button>
               </div>
-            )}
+
+              <button className="close-btn" onClick={() => setIsInfoPanelVisible(false)}>×</button>
+              <h2>{selectedPlace.name}</h2>
+              <p><strong>📍 주소:</strong> {selectedPlace.vicinity || '정보 없음'}</p>
+              <p><strong>📞 연락처:</strong> {selectedPlace.formatted_phone_number || '없음'}</p>
+              <p><strong>📝 소개:</strong> {selectedPlace.description || '설명 없음'}</p>
+
+              {/* ✅ 장바구니 버튼은 패널 하단으로 이동 */}
+              <div className="cart-action-buttons">
+                {cartItems.some(item => item.name === selectedPlace.name) ? (
+                  <button
+                    className="remove-from-cart-button"
+                    onClick={() => setCartItems(cartItems.filter(item => item.name !== selectedPlace.name))}
+                  >
+                    ➖ 장바구니에서 제거
+                  </button>
+                ) : (
+                  <button
+                    className="add-to-cart-button"
+                    onClick={() => handleAddToPlanner(selectedPlace)}
+                  >
+                    ➕ 장바구니에 담기
+                  </button>
+                )}
+              </div>
+
+              {selectedPlace.types?.includes('lodging') && (
+                <p>
+                  <a
+                    href={`https://www.yanolja.com/search?keyword=${encodeURIComponent(selectedPlace.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    🏨 야놀자에서 예약하기
+                  </a>
+                </p>
+              )}
+              {/* 상세페이지 사진 */}
+              {googlePlaceDetails && activeTab === 'photos' && (
+                <div className="photos-section">
+                  {googlePlaceDetails.photos?.slice(0, 6).map((photo, idx) => (
+                    <img
+                      key={idx}
+                      className="info-photo"
+                      src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`}
+                      alt="장소 사진"
+                    />
+                  ))}
+                </div>
+              )}
+              {/* 리뷰사진 */}
+              {googlePlaceDetails && activeTab === 'reviews' && (
+                <div className="reviews-section">
+                  {googlePlaceDetails.reviews?.slice(0, 5).map((review, idx) => (
+                    <div key={idx} className="review-item">
+                      <p>"{review.text}"</p>
+                      <p><strong>작성자:</strong> {review.author_name || '익명'}</p>
+                      <p><strong>⭐ 평점:</strong> {review.rating || 'N/A'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         
         {/* Right Sidebar: 장바구니 */}
         <div className="right-sidebar">
         <h3>내 일정</h3>
-          {cartItems.length === 0 ? (
+        {cartItems.length === 0 ? (
             <p>장바구니에 담긴 장소가 없습니다.</p>
           ) : (
             <div className="cart-list">
-              {cartItems.map((item, index) => (
-                <div key={index} className="cart-item">
-                  {/* 이미지 */}
-                  <div className="cart-item-image">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} />
-                    ) : (
-                      <div className="placeholder-image" />
-                    )}
-                  </div>
-                    
-                  {/* 이름과 삭제 버튼 */}
-                  <div className="cart-item-info">
-                    <strong>{item.name}</strong>
-                    <button
-                      className="delete-button"
-                      onClick={() => handleDeleteCartItem(index)}
-                    >
-                      삭제
-                    </button>
-                  </div>
+              {cartItems.map((item, idx) => (
+                <div key={idx} className="cart-item">
+                  <strong>{item.name}</strong>
+                  {item.photoReference && (
+                    <img
+                      className="info-photo"
+                      src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${item.photoReference}&key=${GOOGLE_API_KEY}`}
+                      alt="대표 사진"
+                    />
+                  )}
+                  <button className="delete-button" onClick={() => setCartItems(cartItems.filter((_, i) => i !== idx))}>삭제</button>
                 </div>
               ))}
             </div>

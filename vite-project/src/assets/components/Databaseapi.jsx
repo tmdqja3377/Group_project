@@ -144,7 +144,7 @@ export async function createPlanner(tripData) {
 export async function addPlannerItem(plannerItemData) {
   try {
     console.log("서버로 전송되는 데이터:", plannerItemData);
-    const res = await axios.post(`${API_URL}/api/planner/add-item`, plannerItemData, {
+    const res = await axios.post(`${API_URL}/api/planner/add-item-simple`, plannerItemData, {
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json',
