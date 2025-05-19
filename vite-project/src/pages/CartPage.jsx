@@ -64,14 +64,20 @@ const CartPage = () => {
 
   useEffect(() => {
     if (!window.google) return;
-    const center = { lat: 37.5665, lng: 126.9780 };
-    const map = new window.google.maps.Map(document.getElementById('google-map'), {
-      center,
-      zoom: 13,
-    });
-    mapRef.current = map;
-    loadPlaces(map, category);
-  }, []);
+
+    const storedTripData = localStorage.getItem('plannedTrip');
+    const storedTrip = storedTripData ? JSON.parse(storedTripData) : null;
+
+      const center = storedTrip?.region
+      ? { lat: storedTrip.region.lat, lng: storedTrip.region.lng }
+      : { lat: 37.5665, lng: 126.9780 }; // 기본값: 서울
+      const map = new window.google.maps.Map(document.getElementById('google-map'), {
+        center,
+        zoom: 13,
+      });
+      mapRef.current = map;
+      loadPlaces(map, category);
+    }, []);
 
   useEffect(() => {
     if (mapRef.current) {

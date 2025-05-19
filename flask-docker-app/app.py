@@ -495,6 +495,36 @@ def get_planner_list():
     return jsonify({'plans': planners})
 
 
+#스케줄페이지 순서랑 방문일자 업데이트
+@app.route('/api/planner/update-item', methods=['POST'])
+@require_api_key
+def update_planner_item():
+    data = request.get_json()
+    item_id = data.get('id')
+    visit_date = data.get('visitDate')
+    sequence = data.get('sequence')
+
+    if not item_id or visit_date is None or sequence is None:
+        return jsonify({'error': 'id, visitDate, sequence 값이 필요합니다.'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE planner_items
+            SET visit_date = %s, sequence = %s
+            WHERE id = %s
+        """, (visit_date, sequence, item_id))
+        conn.commit()
+        return jsonify({'message': '일정이 성공적으로 업데이트되었습니다.'})
+    except Exception as e:
+        print("플래너 항목 업데이트 실패:", e)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

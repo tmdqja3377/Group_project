@@ -4,6 +4,7 @@ import '../assets/css/ScheduleSummaryPage.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { updatePlannerItem } from '../assets/components/Databaseapi.jsx';
 
 const API_URL = 'http://localhost:5001/api';
 const API_KEY = '3plus3equal_random';
@@ -30,6 +31,7 @@ const ScheduleSummaryPage = () => {
     const [newDate, setNewDate] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
+    
     // 최초 진입 시 DB에서 planner, planner_items 정보 조회
     useEffect(() => {
         if (!plannerId) return;
@@ -54,8 +56,28 @@ const ScheduleSummaryPage = () => {
             headers: { 'x-api-key': API_KEY }
         })
         .then(res => {
-            // 초기에는 모두 장바구니(cartItems)에 넣어둔다.
-            setCartItems(res.data.items || []);
+            const items = res.data.items || [];
+            const sortedSchedule = {};
+            const unassignedItems = [];
+
+            items.forEach(item => {
+                if (item.visit_date) {
+                    const date = item.visit_date;
+                    if (!sortedSchedule[date]) sortedSchedule[date] = [];
+                    sortedSchedule[date].push(item);
+                } else {
+                    // 방문일자 없는 데이터 → 장바구니로
+                    unassignedItems.push(item);
+                }
+            });
+
+            // 날짜별로 sequence로 정렬
+            Object.keys(sortedSchedule).forEach(date => {
+                sortedSchedule[date].sort((a, b) => a.sequence - b.sequence);
+            });
+
+            setSchedule(sortedSchedule);
+            setCartItems(unassignedItems);
         })
         .catch(() => alert('장소 정보 로드 실패'));
     }, [plannerId]);
@@ -133,40 +155,51 @@ const ScheduleSummaryPage = () => {
 
     // 저장(일정 최종 확정)
     const handleSave = async () => {
-        if (
-            Object.values(schedule).every((items) => items.length === 0)
-        ) {
-            alert('모든 날짜에 최소 1개 이상 장소를 배치해야 저장할 수 있습니다.');
-            return;
-        }
-        setIsSaving(true);
-        try {
-            // 날짜별 장소를 DB에 저장 (planner_items에 visit_date, sequence로)
-            const savePromises = [];
-            Object.entries(schedule).forEach(([date, items]) => {
-                items.forEach((item, idx) => {
+    if (Object.values(schedule).every(items => items.length === 0)) {
+        alert('모든 날짜에 최소 1개 이상 장소를 배치해야 저장할 수 있습니다.');
+        return;
+    }
+
+    setIsSaving(true);
+    try {
+        const savePromises = [];
+        Object.entries(schedule).forEach(([date, items]) => {
+            items.forEach((item, idx) => {
+                if (item.id) {
+                    // ✅ 기존 항목: 업데이트
+                    savePromises.push(
+                        updatePlannerItem({
+                            id: item.id,
+                            visitDate: date,
+                            sequence: idx
+                        })
+                    );
+                } else {
+                    // ✅ 새로 추가된 항목: 인서트
                     savePromises.push(
                         axios.post(`${API_URL}/planner/add-item-simple`, {
                             plannerId,
                             latitude: item.latitude,
                             longitude: item.longitude,
-                            spotName: item.spotName || item.name, // spotName이 없으면 name 사용
+                            spotName: item.spotName || item.name,
                             visitDate: date,
-                            sequence: idx,
+                            sequence: idx
                         }, { headers: { 'x-api-key': API_KEY } })
                     );
-                });
+                }
             });
-            await Promise.all(savePromises);
-            alert('저장 완료!');
-            navigate('/mypage');
-        } catch (err) {
-            console.error('저장 실패:', err);
-            alert('저장 실패!');
-        } finally {
-            setIsSaving(false);
-        }
-    };
+        });
+
+        await Promise.all(savePromises);
+        alert('저장 완료!');
+        navigate('/mypage');
+    } catch (err) {
+        console.error('저장 실패:', err);
+        alert('저장 실패!');
+    } finally {
+        setIsSaving(false);
+    }
+};
 
     // DragDrop 라이브러리
     

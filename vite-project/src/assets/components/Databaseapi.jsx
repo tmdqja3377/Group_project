@@ -187,3 +187,19 @@ export async function getTravelPlans(userId) {
         return [];
     }
 }
+
+//플래너 순서,방문일자 수정
+export async function updatePlannerItem(itemData) {
+    try {
+        const res = await axios.post(`${API_URL}/api/planner/update-item`, itemData, {
+            headers: {
+                'x-api-key': API_KEY,
+                'Content-Type': 'application/json',
+            }
+        });
+        return res.data;
+    } catch (error) {
+        console.error("플래너 아이템 업데이트 실패:", error);
+        throw error;
+    }
+}
