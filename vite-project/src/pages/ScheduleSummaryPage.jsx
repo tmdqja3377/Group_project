@@ -3,7 +3,7 @@ import Navbar from '../assets/components/Navbar';
 import '../assets/css/ScheduleSummaryPage.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const API_URL = 'http://localhost:5001/api';
 const API_KEY = '3plus3equal_random';

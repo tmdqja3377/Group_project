@@ -458,6 +458,7 @@ def delete_planner_item(item_id):
         cursor.close()
         conn.close()
 
+#플래너 조회
 @app.route('/api/planner/info')
 def get_planner_info():
     planner_id = request.args.get('plannerId')
@@ -468,6 +469,7 @@ def get_planner_info():
     conn.close()
     return jsonify(data)
 
+#플래너 안에 장바구니 정보 조회
 @app.route('/api/planner/items')
 def get_planner_items():
     planner_id = request.args.get('plannerId')
@@ -477,6 +479,20 @@ def get_planner_items():
         data = cursor.fetchall()
     conn.close()
     return jsonify({'items': data})
+
+#여러개의 플래너 가져오기 /마이페이지 카드
+@app.route('/api/planner/list')
+def get_planner_list():
+    user_id = request.args.get('userId')
+    if not user_id:
+        return jsonify({'error': 'userId 파라미터가 필요합니다.'}), 400
+
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM planners WHERE user_id = %s", (user_id,))
+        planners = cursor.fetchall()
+    conn.close()
+    return jsonify({'plans': planners})
 
 
 

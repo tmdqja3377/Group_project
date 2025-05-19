@@ -176,3 +176,14 @@ export async function deletePlannerItem(plannerItemId) {
     throw error;  // 오류 발생 시 throw로 상위 호출로 전달
   }
 }
+
+//마이페이지 카드
+export async function getTravelPlans(userId) {
+    try {
+        const res = await axios.get(`${API_URL}/api/planner/list`, { params: { userId } });
+        return res.data.plans || [];
+    } catch (error) {
+        console.error('여행 계획 목록 조회 실패:', error);
+        return [];
+    }
+}
