@@ -35,52 +35,62 @@ const ScheduleSummaryPage = () => {
     // 최초 진입 시 DB에서 planner, planner_items 정보 조회
     useEffect(() => {
         if (!plannerId) return;
-        // 1. 여행정보 불러오기 (planners)
+      
+        // 1. 여행 정보 먼저 받아오기
         axios.get(`${API_URL}/planner/info`, {
-            params: { plannerId },
-            headers: { 'x-api-key': API_KEY }
+          params: { plannerId },
+          headers: { 'x-api-key': API_KEY }
         })
-        .then(res => {
-            setTripInfo(res.data);
-            // 날짜 배열로 schedule 초기화
-            const dateList = getDateRangeList(res.data.start_date, res.data.end_date);
-            const newSchedule = {};
-            dateList.forEach(date => { newSchedule[date] = []; });
-            setSchedule(newSchedule);
-        })
-        .catch(() => alert('여행 정보 로드 실패'));
-
-        // 2. 장소목록 불러오기 (planner_items)
-        axios.get(`${API_URL}/planner/items`, {
-            params: { plannerId },
-            headers: { 'x-api-key': API_KEY }
-        })
-        .then(res => {
-            const items = res.data.items || [];
-            const sortedSchedule = {};
+        .then(async res => {
+          const info = res.data;
+          setTripInfo(info);
+      
+          // 날짜 초기화
+          const dateList = getDateRangeList(info.start_date, info.end_date);
+          const initialSchedule = {};
+          dateList.forEach(date => { initialSchedule[date] = []; });
+      
+          // 2. 그 다음 장소 정보 받아오기
+          try {
+            const res2 = await axios.get(`${API_URL}/planner/items`, {
+              params: { plannerId },
+              headers: { 'x-api-key': API_KEY }
+            });
+      
+            const items = res2.data.items || [];
             const unassignedItems = [];
-
+      
             items.forEach(item => {
                 if (item.visit_date) {
-                    const date = item.visit_date;
-                    if (!sortedSchedule[date]) sortedSchedule[date] = [];
-                    sortedSchedule[date].push(item);
-                } else {
-                    // 방문일자 없는 데이터 → 장바구니로
+                  const formattedDate = new Date(item.visit_date).toISOString().split('T')[0];
+                  if (initialSchedule[formattedDate]) {
+                    initialSchedule[formattedDate].push(item);
+                  } else {
                     unassignedItems.push(item);
+                  }
+                } else {
+                  unassignedItems.push(item);
                 }
+              });
+              
+      
+            // 정렬
+            Object.keys(initialSchedule).forEach(date => {
+              initialSchedule[date].sort((a, b) => a.sequence - b.sequence);
             });
-
-            // 날짜별로 sequence로 정렬
-            Object.keys(sortedSchedule).forEach(date => {
-                sortedSchedule[date].sort((a, b) => a.sequence - b.sequence);
-            });
-
-            setSchedule(sortedSchedule);
+      
+            setSchedule(initialSchedule);
             setCartItems(unassignedItems);
+      
+          } catch (err) {
+            alert('장소 정보 로드 실패');
+          }
         })
-        .catch(() => alert('장소 정보 로드 실패'));
-    }, [plannerId]);
+        .catch(() => {
+          alert('여행 정보 로드 실패');
+        });
+      }, [plannerId]);
+      
 
     // 드래그 & 드롭 관련 로직
     const handleDragEnd = (result) => {
