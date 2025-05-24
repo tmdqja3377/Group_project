@@ -171,3 +171,25 @@
 .save-button:hover {
   background-color: #0056b3;
 }
+
+.ai-generate-btn {
+  background-color: #6f86ff;
+  color: #fff;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 7px;
+  font-weight: 700;
+  font-size: 1em;
+  cursor: pointer;
+  margin-bottom: 22px;
+  transition: background 0.2s;
+  box-shadow: 0 2px 7px rgba(120,140,255,0.09);
+  letter-spacing: 0.01em;
+}
+
+.ai-generate-btn:disabled {
+  background: #bbb;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.85;
+}

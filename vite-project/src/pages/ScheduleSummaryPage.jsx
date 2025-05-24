@@ -91,6 +91,38 @@ const ScheduleSummaryPage = () => {
         });
       }, [plannerId]);
       
+    // 장바구니 장소를 날짜별로 자동 분배 (AI 없이)
+    const autoDistributeCartItems = () => {
+        if (!tripInfo) {
+            alert('여행 정보가 없습니다.');
+            return;
+        }
+        if (Object.values(schedule).some(items => items.length > 0)) {
+            alert("이미 생성된 일정이 있어요! 기존 일정을 삭제 후 다시 시도하세요.");
+            return;
+        }
+        if (cartItems.length === 0) {
+            alert('장바구니에 담긴 장소가 없습니다.');
+            return;
+        }
+
+        const dateList = getDateRangeList(tripInfo.start_date, tripInfo.end_date);
+        const shuffled = [...cartItems].sort(() => 0.5 - Math.random());
+        const nDates = dateList.length;
+        const nItems = shuffled.length;
+        const baseNum = Math.floor(nItems / nDates);
+        let remain = nItems % nDates;
+        let idx = 0;
+        const newSchedule = {};
+        dateList.forEach(date => {
+            let count = baseNum + (remain > 0 ? 1 : 0);
+            remain = Math.max(remain - 1, 0);
+            newSchedule[date] = shuffled.slice(idx, idx + count);
+            idx += count;
+        });
+        setSchedule(newSchedule);
+        setCartItems([]);
+    };
 
     // 드래그 & 드롭 관련 로직
     const handleDragEnd = (result) => {
@@ -305,6 +337,15 @@ const ScheduleSummaryPage = () => {
                                 </div>
                             )}
                         </Droppable>
+                        {/* ⭐️ 장바구니 자동 배치 버튼 ⭐️ */}
+                        <button
+                            onClick={autoDistributeCartItems}
+                            disabled={!tripInfo || cartItems.length === 0}
+                            className="ai-generate-btn"
+                            style={{ marginTop: '16px', marginBottom: '10px' }}
+                        >
+                            {cartItems.length === 0 ? "장바구니가 비어있어요" : "🧠 장바구니 자동 배치"}
+                        </button>
                         <button
                             className="save-button"
                             onClick={handleSave}

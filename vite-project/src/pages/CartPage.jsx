@@ -4,6 +4,8 @@ import '../assets/css/CartPage.css';
 import "../assets/css/DetailPanel.css";
 import { getPlaces, addPlannerItem, deletePlannerItem } from '../assets/components/Databaseapi.jsx';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 
 const CartPage = () => {
   const [googlePlaceDetails, setGooglePlaceDetails] = useState(null);
@@ -22,6 +24,10 @@ const CartPage = () => {
   const mapRef = useRef(null); // 🆕 지도 인스턴스 저장용
   const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
   const navigate = useNavigate();
+
+  // 👇 👇 👇 추가: 지도에 보이는 places 정보 전역 관리
+  const [visiblePlaces, setVisiblePlaces] = useState([]);
+  const [isAutoAdding, setIsAutoAdding] = useState(false);
 
   //구글 API관련
   const fetchGooglePlaceDetails = async (placeName, setGooglePlaceDetails) => {
@@ -42,6 +48,7 @@ const CartPage = () => {
     fetchGooglePlaceDetails(place.name, setGooglePlaceDetails);
   };
 
+  // 👇 👇 👇 loadPlaces에서 setVisiblePlaces 반영
   const loadPlaces = (map, selectedCategory) => {
     const center = map.getCenter();
     const service = new window.google.maps.places.PlacesService(map);
@@ -58,6 +65,8 @@ const CartPage = () => {
           marker.addListener('click', () => handleMarkerClick(place));
           markersRef.current.push(marker);
         });
+        // 👇 현재 맵에 보이는 장소들 저장
+        setVisiblePlaces(results);
       }
     });
   };
@@ -204,6 +213,80 @@ const CartPage = () => {
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
   }, [searchTerm]);
+
+  // 👇 👇 👇 AI 자동 장소 추가 함수 (지도에 마커로 뜬 visiblePlaces 기준, 음식점2+명소/카페2, 숙소 완전 제외)
+  const handleAutoAddAI = async () => {
+    if (!tripInfo || !tripInfo.plannerId) {
+      alert('여행 정보가 없습니다!');
+      return;
+    }
+    if (visiblePlaces.length === 0) {
+      alert('지금 지도에 보이는 장소가 없습니다!');
+      return;
+    }
+    setIsAutoAdding(true);
+    try {
+      const alreadyInCart = new Set(cartItems.map(i => i.name));
+      const filteredPlaces = visiblePlaces.filter(s => !alreadyInCart.has(s.name));
+  
+        // types 기준 분류
+        const isRestaurant = (s) => (s.types || []).includes('restaurant');
+        const isCafe = (s) => (s.types || []).includes('cafe');
+        const isAttraction = (s) => (s.types || []).includes('tourist_attraction');
+        const isLodging = (s) => (s.types || []).includes('lodging');
+  
+        // 숙소는 완전 제외
+        const validSpots = filteredPlaces.filter(s => !isLodging(s));
+        const restaurants = validSpots.filter(isRestaurant);
+        const others = validSpots.filter(s => isAttraction(s) || isCafe(s));
+  
+        // 날짜 리스트 생성
+        const startDate = new Date(tripInfo.startDate);
+        const endDate = new Date(tripInfo.endDate);
+        const dateList = [];
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+          dateList.push(new Date(d).toISOString().split('T')[0]);
+        }
+  
+        // 날짜별 장소 랜덤 선택 (중복 X)
+        const picked = new Set();
+        const addList = [];
+        for (let date of dateList) {
+          // 음식점 2개 pick
+          const availableRestaurants = restaurants.filter(s => !picked.has(s.name));
+          const pickedRestaurants = availableRestaurants.sort(() => 0.5 - Math.random()).slice(0, 2);
+          pickedRestaurants.forEach(s => picked.add(s.name));
+  
+          // 명소/카페 2개 pick
+          const availableOthers = others.filter(s => !picked.has(s.name));
+          const pickedOthers = availableOthers.sort(() => 0.5 - Math.random()).slice(0, 2);
+          pickedOthers.forEach(s => picked.add(s.name));
+  
+          const todaysPicks = [...pickedRestaurants, ...pickedOthers];
+  
+          for (const spot of todaysPicks) {
+            await addPlannerItem({
+            plannerId: tripInfo.plannerId,
+            latitude: spot.geometry?.location?.lat() ?? spot.latitude,
+            longitude: spot.geometry?.location?.lng() ?? spot.longitude,
+            spotName: spot.name,
+            types: JSON.stringify(spot.types),
+            // 날짜와 시퀀스는 배정 안 함 (나중에 스케쥴에서 자동 배치로 할당)
+          });
+  
+            addList.push({
+              ...spot,
+              photoReference: spot.photoReference || (spot.photos?.[0]?.photo_reference ?? null)
+            });
+          }
+        }
+        setCartItems(prev => [...prev, ...addList]);
+        alert('음식점 2개, 명소/카페 2개씩 날짜별로 자동 추가 완료! (숙소 제외)');
+      } catch (e) {
+        alert('AI 자동 추천에 실패했습니다!');
+      }
+      setIsAutoAdding(false);
+    };
   
 
 
@@ -370,6 +453,15 @@ const CartPage = () => {
               ))}
             </div>
           )}
+          {/* === AI 자동 장소 추가 버튼 === */}
+          <button
+            className="ai-autoadd-button"
+            style={{ marginTop: 8, marginBottom: 8, background: '#6c63ff', color: 'white', borderRadius: '8px', padding: '8px', fontWeight: 600 }}
+            onClick={handleAutoAddAI}
+            disabled={isAutoAdding}
+          >
+            {isAutoAdding ? "추천 중..." : "🧠 AI 자동 장소 추가"}
+          </button>
           <button className="next-button" onClick={() => navigate('/schedule-summary', { state: { plannerId: tripInfo.plannerId } })
           }>  
             다음
