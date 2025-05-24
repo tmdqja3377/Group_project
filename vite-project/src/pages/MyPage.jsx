@@ -19,7 +19,6 @@ function Modal({ open, onClose, title, children }) {
 }
 
 function UserInfo({ userData }) {
-    const [showDetail, setShowDetail] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [editData, setEditData] = useState({ ...userData });
     const [previewImage, setPreviewImage] = useState(null);
@@ -47,14 +46,7 @@ function UserInfo({ userData }) {
             reader.readAsDataURL(file);
         }
     };
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setEditData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
+    
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -97,7 +89,8 @@ function UserInfo({ userData }) {
         try {
             const updatedData = {
                 userid: userData.userid,
-                name: editData.name
+                username: editData.username,         // ✔️ 닉네임 필드 정확히
+                profileImage: editData.profileImage  // ✔️ 이미지도 포함
             };
             await updateUserProfile(updatedData);
             alert('프로필이 성공적으로 수정되었습니다.');
@@ -108,6 +101,7 @@ function UserInfo({ userData }) {
             alert('프로필 수정 실패');
         }
     };
+    
 
     return (
         <div className="user-profile-container">
@@ -118,32 +112,14 @@ function UserInfo({ userData }) {
             <div className="user-info">
                 <p><strong>ID:</strong> {userData.userid}</p>
                 <p><strong>닉네임:</strong> {userData.username}</p>
-                <p><strong>이름:</strong> {userData.name}</p>
 
                 <div style={{ display: 'flex', gap: '12px', marginTop: '18px' }}>
-                    <button className="profile-btn" onClick={() => setShowDetail(true)}>
-                        상세보기
-                    </button>
                     <button className="profile-btn" onClick={() => setShowEdit(true)}>
                         수정하기
                     </button>
                 </div>
 
-                {/* 상세보기 모달 */}
-                <Modal open={showDetail} onClose={() => setShowDetail(false)} title="프로필 상세보기">
-                    <div className="profile-detail-content">
-                        <div className="profile-detail-image">
-                            <img src={userData.profileImage || '/img/pro.png'} alt="프로필 이미지" />
-                        </div>
-                        <div className="profile-detail-info">
-                            <p><strong>ID:</strong> {userData.userid}</p>
-                            <p><strong>닉네임:</strong> {userData.username}</p>
-                            <p><strong>이름:</strong> {userData.name}</p>
-                        </div>
-                    </div>
-                </Modal>
-
-                {/* 수정 모달 */}
+                {/* 수정 모델 */}
                 <Modal open={showEdit} onClose={() => setShowEdit(false)} title="프로필 수정">
                     <div className="profile-edit-form">
                         <div className="form-group">
@@ -168,9 +144,21 @@ function UserInfo({ userData }) {
                         </div>
 
                         <div className="form-group">
-                            <label>이름</label>
-                            <input type="text" name="name" value={editData.name || ''} onChange={handleInputChange} />
+                            <label>닉네임</label>
+                            <input
+                                type="text"
+                                name="username"
+                                value={editData.username}
+                                onChange={(e) =>
+                                    setEditData((prev) => ({
+                                        ...prev,
+                                        username: e.target.value,
+                                    }))
+                                }
+                                placeholder="닉네임을 입력하세요"
+                            />
                         </div>
+
 
                         <div className="form-group">
                             <label>현재 비밀번호</label>
@@ -261,14 +249,19 @@ function MyPage() {
             const fetchUser = async () => {
                 try {
                     const res = await getUserInfo(userId);
-                    setUserData(res);
+                    // 🔥 snake_case → camelCase 로 변환!
+                    setUserData({
+                        userid: res.userid,
+                        username: res.username,
+                        profileImage: res.profile_image || null,  // ✅ 이 줄 필수!
+                    });
                 } catch (err) {
                     console.error('사용자 정보 불러오기 실패:', err);
                     setError('사용자 정보를 불러오지 못했습니다.');
                 } finally {
                     setLoading(false);
                 }
-            };
+            };            
             fetchUser();
             fetchPlans();
         }

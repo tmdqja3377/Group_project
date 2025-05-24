@@ -305,7 +305,7 @@ def get_user_info():
     try:
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT userid, username FROM usertable WHERE userid = %s", (userid,))
+            cursor.execute("SELECT userid, username, profile_image FROM usertable WHERE userid = %s", (userid,))
             user = cursor.fetchone()
         conn.close()
 
@@ -338,11 +338,8 @@ def delete_user():
 def update_user_info():
     data = request.get_json()
     userid = data.get('userid')
-    name = data.get('name')
-    birth = data.get('birth')
-    gender = data.get('gender')
-    phone = data.get('phone')
-    email = data.get('email')
+    username = data.get('username')  # ✅ 이름 필드 수정
+    profile_image = data.get('profileImage')  # ✅ 이미지 추가
 
     if not userid:
         return jsonify({'error': 'userid는 필수입니다.'}), 400
@@ -351,12 +348,24 @@ def update_user_info():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
-            UPDATE usertable
-            SET username = %s, birth = %s, gender = %s, phone = %s, email = %s
-            WHERE userid = %s
-        """, (name, birth, gender, phone, email, userid))
+        update_fields = []
+        values = []
 
+        if username:
+            update_fields.append("username = %s")
+            values.append(username)
+
+        if profile_image:
+            update_fields.append("profile_image = %s")
+            values.append(profile_image)
+
+        if not update_fields:
+            return jsonify({'error': '업데이트할 항목이 없습니다.'}), 400
+
+        query = f"UPDATE usertable SET {', '.join(update_fields)} WHERE userid = %s"
+        values.append(userid)
+
+        cursor.execute(query, tuple(values))
         conn.commit()
         return jsonify({'message': '사용자 정보가 성공적으로 수정되었습니다.'})
     except Exception as e:
@@ -365,6 +374,7 @@ def update_user_info():
     finally:
         cursor.close()
         conn.close()
+
 
 @app.route('/api/password-change', methods=['POST'])
 @require_api_key
