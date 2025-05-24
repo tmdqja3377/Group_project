@@ -14,6 +14,8 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
+
+
 # .env 또는 환경변수에서 API 키 불러오기
 @app.route('/api/google/proxy-place-details', methods=['GET'])
 def proxy_google_place_details():
@@ -407,28 +409,31 @@ def change_password():
 @require_api_key
 def add_planner_item_simple():
     data = request.get_json()
-    print(f"받은 데이터:", data)  # 🔥 이거 추가
     
     planner_id = data.get('plannerId')
     latitude = data.get('latitude')
     longitude = data.get('longitude')
     spot_name = data.get('spotName')
-    
+    visit_date = data.get('visitDate')
+    sequence = data.get('sequence')
+    photo_reference = data.get('photoReference')
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO planner_items (planner_id, latitude, longitude, spotName)
-            VALUES (%s, %s, %s, %s)
-        """, (planner_id, latitude, longitude, spot_name))
+            INSERT INTO planner_items (planner_id, visit_date, sequence, latitude, longitude, spotName, photoReference)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (planner_id, visit_date, sequence, latitude, longitude, spot_name, photo_reference))
         conn.commit()
         return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!"}), 201
     except Exception as e:
-        print(f"플래너 항목 추가 실패:", e)  # 🔥 여기도 로그 꼭
+        print(f"플래너 항목 추가 실패:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
         conn.close()
+
 
 
 @app.route('/api/planner/delete-item/<int:item_id>', methods=['DELETE'])
