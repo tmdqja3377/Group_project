@@ -10,6 +10,7 @@ import MyPage from './pages/MyPage.jsx';
 import NaverCallback from './assets/components/Naverlogincallback.jsx'
 import LoginSuccess from './assets/components/LoginSuccess.jsx'
 import ScheduleSummaryPage from './pages/ScheduleSummaryPage.jsx';
+import WeatherPage from './pages/WeatherPage.jsx'; 
 
 
 
@@ -86,6 +87,7 @@ function App() {
         <Route path="/naver/callback" element={<NaverCallback />} />
         <Route path="/login-success" element={<LoginSuccess />} />
         <Route path="/schedule-summary" element={<ScheduleSummaryPage />} />
+        <Route path="/weather" element={<WeatherPage />} />
       </Routes>
     </BrowserRouter>
     

@@ -46,6 +46,11 @@ function Navbar() {
                 <Link to="/location" className="nav-button">
                     여행지
                 </Link>
+                <Link to="/weather" className="nav-button">날씨</Link>
+                {/* ✅ 항공권 버튼 - 외부 링크 새 창으로 */}
+                <a href="https://flight.naver.com/" target="_blank" rel="noopener noreferrer" className="nav-button">
+                    항공권
+                </a>
                 {isLoggedIn && (
                     <Link to="/mypage" className="nav-button">
                         마이페이지
