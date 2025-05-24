@@ -524,6 +524,59 @@ def update_planner_item():
         cursor.close()
         conn.close()
 
+@app.route('/api/google/search-places', methods=['GET'])
+def proxy_google_search_places():
+    query = request.args.get('query')
+    if not query:
+        return jsonify({'error': 'Missing query parameter'}), 400
+
+    GOOGLE_API_KEY = os.getenv('VITE_GOOGLE_PLACES_API_KEY')
+    search_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
+    params = {
+        'query': query,
+        'language': 'ko',
+        'key': GOOGLE_API_KEY
+    }
+
+    try:
+        res = requests.get(search_url, params=params)
+        return jsonify(res.json())
+    except Exception as e:
+        print("🔥 Google Places 프록시 에러:", e)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/google/batch-places', methods=['POST'])
+def batch_google_places():
+    data = request.get_json()
+    region = data.get("region")
+    place_names = data.get("place_names")
+
+    if not region or not place_names:
+        return jsonify({"error": "Missing region or place_names"}), 400
+
+    GOOGLE_API_KEY = os.getenv('VITE_GOOGLE_PLACES_API_KEY')
+    search_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
+
+    results = []
+
+    for name in place_names:
+        query = f"{region} {name}"
+        params = {
+            'query': query,
+            'language': 'ko',
+            'key': GOOGLE_API_KEY
+        }
+        try:
+            res = requests.get(search_url, params=params)
+            data = res.json()
+            first_result = data['results'][0] if data.get('results') else None
+            results.append({"name": name, "result": first_result})
+        except Exception as e:
+            results.append({"name": name, "error": str(e)})
+
+    return jsonify({"results": results})
+
+
 
 
 if __name__ == '__main__':
