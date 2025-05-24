@@ -1,4 +1,3 @@
-// src/components/Navbar.js
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../css/Navbar.css';
@@ -12,28 +11,19 @@ function Navbar() {
             const loggedIn = localStorage.getItem('isLoggedIn');
             setIsLoggedIn(loggedIn === 'true');
         };
-    
-        // 처음 로딩 때 체크
         checkLogin();
-    
-        // localStorage 변화를 감지하는 리스너 추가
         window.addEventListener('storage', checkLogin);
-    
-        // 컴포넌트 언마운트될 때 리스너 제거
         return () => {
             window.removeEventListener('storage', checkLogin);
         };
     }, []);
 
-    
-    //로그아웃 함수 생성
     const handleLogout = () => {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('currentUser');
         setIsLoggedIn(false);
         navigate('/');
     };
-
 
     return (
         <nav className="navbar">
@@ -43,16 +33,15 @@ function Navbar() {
                 </Link>
             </div>
             <div className="nav-buttons">
-                <Link to="/location" className="nav-button">
-                    여행지
-                </Link>
-                <Link to="/chatbot" className="nav-button">
-                    AI
-                </Link>
+                <Link to="/location" className="nav-button">여행지</Link>
+                <Link to="/weather" className="nav-button">날씨</Link>
+                {/* ✅ 항공권 버튼 - 외부 링크 새 창으로 */}
+                <a href="https://flight.naver.com/" target="_blank" rel="noopener noreferrer" className="nav-button">
+                    항공권
+                </a>
+
                 {isLoggedIn && (
-                    <Link to="/mypage" className="nav-button">
-                        마이페이지
-                    </Link>
+                    <Link to="/mypage" className="nav-button">마이페이지</Link>
                 )}
                 {isLoggedIn ? (
                     <button onClick={handleLogout} className="nav-button logout-button">로그아웃</button>
