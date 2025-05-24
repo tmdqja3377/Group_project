@@ -10,3 +10,8 @@ ALTER TABLE usertable ADD UNIQUE INDEX idx_userid (userid);
 DELETE FROM usertable
 WHERE id = 8
 LIMIT 1;
+
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE planner_items;
+TRUNCATE TABLE planners;
+SET FOREIGN_KEY_CHECKS = 1;

@@ -5,3 +5,4 @@ dotenv==0.9.9
 bcrypt==4.3.0
 mysql-connector-python==9.3.0
 requests==2.32.3
+Flask-Session==0.4.0

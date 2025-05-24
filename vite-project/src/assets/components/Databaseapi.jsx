@@ -144,7 +144,7 @@ export async function createPlanner(tripData) {
 export async function addPlannerItem(plannerItemData) {
   try {
     console.log("서버로 전송되는 데이터:", plannerItemData);
-    const res = await axios.post(`${API_URL}/api/planner/add-item`, plannerItemData, {
+    const res = await axios.post(`${API_URL}/api/planner/add-item-simple`, plannerItemData, {
       headers: {
         'x-api-key': API_KEY,
         'Content-Type': 'application/json',
@@ -177,18 +177,29 @@ export async function deletePlannerItem(plannerItemId) {
   }
 }
 
-// 사용자별 플래너 목록 불러오기
-export async function getUserPlanners(userId) {
-  try {
-    const res = await axios.get(`${API_URL}/api/planners`, {
-      params: { user_id: userId },
-      headers: {
-        'x-api-key': API_KEY
-      }
-    });
-    return res.data;
-  } catch (err) {
-    console.error('getUserPlanners 에러:', err);
-    throw err;
-  }
+//마이페이지 카드
+export async function getTravelPlans(userId) {
+    try {
+        const res = await axios.get(`${API_URL}/api/planner/list`, { params: { userId } });
+        return res.data.plans || [];
+    } catch (error) {
+        console.error('여행 계획 목록 조회 실패:', error);
+        return [];
+    }
+}
+
+//플래너 순서,방문일자 수정
+export async function updatePlannerItem(itemData) {
+    try {
+        const res = await axios.post(`${API_URL}/api/planner/update-item`, itemData, {
+            headers: {
+                'x-api-key': API_KEY,
+                'Content-Type': 'application/json',
+            }
+        });
+        return res.data;
+    } catch (error) {
+        console.error("플래너 아이템 업데이트 실패:", error);
+        throw error;
+    }
 }

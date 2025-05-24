@@ -1,16 +1,10 @@
-// src/pages/MyPage.jsx
+// src/pages/MyPage.js
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/css/App.css';
 import Navbar from '../assets/components/Navbar.jsx';
 import '../assets/css/MyPage.css';
-import {
-    getUserInfo,
-    deleteUser,
-    updateUserProfile,
-    changeUserPassword,
-    getUserPlanners, // 플래너 목록 API 임포트 추가!
-} from '../assets/components/Databaseapi.jsx';
+import { getUserInfo, deleteUser, updateUserProfile, changeUserPassword,  getTravelPlans } from '../assets/components/Databaseapi.jsx';
 
 function Modal({ open, onClose, title, children }) {
     if (!open) return null;
@@ -25,8 +19,6 @@ function Modal({ open, onClose, title, children }) {
 }
 
 function UserInfo({ userData }) {
-    // ... (생략: 기존 UserInfo 코드와 동일, 수정 없음)
-    // 기존 코드 그대로 복사
     const [showDetail, setShowDetail] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [editData, setEditData] = useState({ ...userData });
@@ -104,7 +96,8 @@ function UserInfo({ userData }) {
     const handleSave = async () => {
         try {
             const updatedData = {
-                userid: userData.userid
+                userid: userData.userid,
+                name: editData.name
             };
             await updateUserProfile(updatedData);
             alert('프로필이 성공적으로 수정되었습니다.');
@@ -125,6 +118,7 @@ function UserInfo({ userData }) {
             <div className="user-info">
                 <p><strong>ID:</strong> {userData.userid}</p>
                 <p><strong>닉네임:</strong> {userData.username}</p>
+                <p><strong>이름:</strong> {userData.name}</p>
 
                 <div style={{ display: 'flex', gap: '12px', marginTop: '18px' }}>
                     <button className="profile-btn" onClick={() => setShowDetail(true)}>
@@ -144,6 +138,7 @@ function UserInfo({ userData }) {
                         <div className="profile-detail-info">
                             <p><strong>ID:</strong> {userData.userid}</p>
                             <p><strong>닉네임:</strong> {userData.username}</p>
+                            <p><strong>이름:</strong> {userData.name}</p>
                         </div>
                     </div>
                 </Modal>
@@ -170,6 +165,11 @@ function UserInfo({ userData }) {
                                     />
                                 </label>
                             </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>이름</label>
+                            <input type="text" name="name" value={editData.name || ''} onChange={handleInputChange} />
                         </div>
 
                         <div className="form-group">
@@ -221,27 +221,24 @@ function UserInfo({ userData }) {
     );
 }
 
-// 플래너 카드 컴포넌트
-function PlannerCard({ planner }) {
+
+function TravelCard({ plan, onClick }) {
     return (
-        <div className="travel-card">
-            <h4>{planner.title}</h4>
-            <p>
-                <strong>여행 일자:</strong> {planner.start_date} ~ {planner.end_date}
-            </p>
-            <p>
-                <strong>인원:</strong> {planner.travelers}명
-            </p>
-            <p className="travel-desc">{planner.region_name}</p>
+        <div className="travel-card" onClick={onClick} style={{ cursor: 'pointer' }}>
+            <h4>{plan.title}</h4>
+            <p><strong>여행일자:</strong> {plan.start_date} ~ {plan.end_date}</p>
+            <p><strong>인원:</strong> {plan.travelers}명</p>
+            <p className="travel-desc"><strong>지역:</strong> {plan.region_name}</p>
         </div>
     );
 }
 
 function MyPage() {
     const [userData, setUserData] = useState(null);
-    const [planners, setPlanners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [travelPlans, setTravelPlans] = useState([]);
+
     const navigate = useNavigate();
     const travelPlanListRef = useRef(null);
 
@@ -249,25 +246,31 @@ function MyPage() {
         const loggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('loggedInUserId');
 
+        const fetchPlans = async () => {
+            try {
+                const plans = await getTravelPlans(userId);
+                setTravelPlans(plans);
+            } catch (err) {
+                console.error('여행 일정 불러오기 실패:', err);
+            }
+        };
+
         if (loggedIn !== 'true' || !userId) {
             navigate('/login');
         } else {
-            const fetchData = async () => {
+            const fetchUser = async () => {
                 try {
-                    const userRes = await getUserInfo(userId);
-                    setUserData(userRes);
-
-                    // 사용자 플래너 목록 가져오기
-                    const plannerRes = await getUserPlanners(userId);
-                    setPlanners(plannerRes);
+                    const res = await getUserInfo(userId);
+                    setUserData(res);
                 } catch (err) {
-                    console.error('데이터 불러오기 실패:', err);
-                    setError('사용자 정보 또는 플래너를 불러오지 못했습니다.');
+                    console.error('사용자 정보 불러오기 실패:', err);
+                    setError('사용자 정보를 불러오지 못했습니다.');
                 } finally {
                     setLoading(false);
                 }
             };
-            fetchData();
+            fetchUser();
+            fetchPlans();
         }
     }, [navigate]);
 
@@ -310,23 +313,19 @@ function MyPage() {
                     {userData && <UserInfo userData={userData} onDelete={handleDeleteUser} />}
                 </div>
             </div>
-            
-            {/* ▼▼▼ 프로필 하단에 사용자별 DB 플래너 목록 표시 ▼▼▼ */}
-            <div className="mypage-planner-section">
-                <h3>내 여행 플래너 목록</h3>
-                <div className="travel-plan-list" ref={travelPlanListRef}>
-                    <div className="travel-card-list">
-                        {planners.length === 0 && !loading && <p>플래너가 없습니다.</p>}
-                        {planners.map((planner) => (
-                            <PlannerCard key={planner.id} planner={planner} />
-                        ))}
-                    </div>
+            <div className="travel-plan-list" ref={travelPlanListRef}>
+                <div className="travel-card-list">
+                    {travelPlans.map((plan, idx) => (
+                        <TravelCard
+                            key={plan.id || idx}
+                            plan={plan}
+                            onClick={() => navigate('/schedule-summary', { state: { plannerId: plan.id } })}
+                        />
+                    ))}
                 </div>
             </div>
-            {/* ▲▲▲ 플래너 목록 끝 ▲▲▲ */}
         </div>
     );
 }
 
 export default MyPage;
-

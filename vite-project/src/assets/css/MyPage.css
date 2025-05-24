@@ -461,3 +461,104 @@
 .birth-input-item input[type='number'] {
     -moz-appearance: textfield;
 }
+
+
+/* 여행 일정 카드 리스트 전체 */
+.travel-plan-list {
+    width: 100%;
+    overflow-x: auto;
+    padding: 16px 0 12px 0;
+    background: #f7f7fa;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px 0 rgba(30, 34, 54, 0.05);
+    margin-bottom: 40px;
+}
+
+.travel-card-list {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    padding: 8px 16px 8px 16px;
+    min-width: 380px;
+}
+
+/* 여행 일정 카드 한 개 */
+.travel-card {
+    background: #fff;
+    min-width: 290px;
+    max-width: 330px;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px 0 rgba(0, 16, 80, 0.08);
+    border: 1.5px solid #ececec;
+    padding: 24px 18px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow 0.17s, border 0.17s, transform 0.16s;
+    cursor: pointer;
+    position: relative;
+}
+
+.travel-card:hover {
+    box-shadow: 0 6px 24px 0 rgba(56, 97, 251, 0.10);
+    border: 2.2px solid #448aff;
+    transform: translateY(-5px) scale(1.03);
+    z-index: 2;
+}
+
+/* 여행 일정 카드 제목 */
+.travel-card h4 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #242d53;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+}
+
+/* 일정 주요 정보 */
+.travel-card p {
+    font-size: 1rem;
+    color: #495075;
+    margin: 3px 0;
+    word-break: keep-all;
+}
+
+/* 지역 강조 */
+.travel-desc {
+    color: #1976d2;
+    font-size: 1.08rem;
+    font-weight: 500;
+    margin-top: 6px;
+}
+
+/* 스크롤바 스타일 */
+.travel-plan-list::-webkit-scrollbar {
+    height: 10px;
+    background: #f2f4fa;
+    border-radius: 8px;
+}
+
+.travel-plan-list::-webkit-scrollbar-thumb {
+    background: #e0e7ef;
+    border-radius: 8px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 600px) {
+    .travel-card-list {
+        gap: 12px;
+        padding: 8px 2vw;
+        min-width: 220px;
+    }
+
+    .travel-card {
+        min-width: 190px;
+        max-width: 240px;
+        padding: 14px 10px 10px 10px;
+        font-size: 0.98rem;
+    }
+
+    .travel-card h4 {
+        font-size: 1.07rem;
+    }
+}
