@@ -33,6 +33,7 @@ const ScheduleSummaryPage = () => {
     const [cartItems, setCartItems] = useState([]); // 배치 전 장바구니
     const [newDate, setNewDate] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false); // AI로딩
 
     // 최초 진입 시 DB에서 planner, planner_items 정보 조회
     useEffect(() => {
@@ -92,37 +93,95 @@ const ScheduleSummaryPage = () => {
         });
     }, [plannerId]);
 
-    // 장바구니 장소를 날짜별로 자동 분배 (AI 없이)
-    const autoDistributeCartItems = () => {
+    // ⭐️⭐️⭐️ GPT AI 자동분배 함수 (유일한 자동배치 기능)
+    const handleAIAutoDistribute = async () => {
         if (!tripInfo) {
             alert('여행 정보가 없습니다.');
-            return;
-        }
-        if (Object.values(schedule).some(items => items.length > 0)) {
-            alert("이미 생성된 일정이 있어요! 기존 일정을 삭제 후 다시 시도하세요.");
             return;
         }
         if (cartItems.length === 0) {
             alert('장바구니에 담긴 장소가 없습니다.');
             return;
         }
+        setAiLoading(true);
+        try {
+            const dateList = getDateRangeList(tripInfo.start_date, tripInfo.end_date);
 
-        const dateList = getDateRangeList(tripInfo.start_date, tripInfo.end_date);
-        const shuffled = [...cartItems].sort(() => 0.5 - Math.random());
-        const nDates = dateList.length;
-        const nItems = shuffled.length;
-        const baseNum = Math.floor(nItems / nDates);
-        let remain = nItems % nDates;
-        let idx = 0;
-        const newSchedule = {};
-        dateList.forEach(date => {
-            let count = baseNum + (remain > 0 ? 1 : 0);
-            remain = Math.max(remain - 1, 0);
-            newSchedule[date] = shuffled.slice(idx, idx + count);
-            idx += count;
-        });
-        setSchedule(newSchedule);
-        setCartItems([]);
+            const exampleDate = dateList[0];
+            const spotNames = cartItems.map(i => i.spotName || i.name).join(', ');
+            const prompt = `
+아래 리스트에서만 골라서 ${tripInfo.region_name} ${dateList.length}일 여행 일정을 날짜별로 반드시 "각 날짜마다 2~5개의 서로 다른 장소"를 추천해줘.
+하루에 같은 장소가 두 번 나오는 경우 절대 없어야 하고, 전체 일정에도 같은 장소가 두 번 이상 들어가면 안 돼.
+각 날짜별로 places 배열에 2~5개 장소 이름만 주고, 결과는 반드시 [{"date":"${exampleDate}","places":["장소1","장소2","장소3"]}] 형식의 JSON 배열로만 반환해.
+아래 리스트: [${spotNames}]
+`
+
+            // GPT-4o API 호출
+            const res = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${import.meta.env.VITE_CHAT_GPT_API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o",
+                    messages: [
+                        { role: "system", content: "너는 여행 일정을 자동으로 생성해주는 AI야." },
+                        { role: "user", content: prompt }
+                    ],
+                    temperature: 0.7
+                })
+            });
+            const data = await res.json();
+            // JSON만 추출
+            const content = data.choices?.[0]?.message?.content;
+            // 혹시 GPT가 json block 안에 주면 match로 추출
+            let jsonText = '';
+            if (content.includes('```json')) {
+                jsonText = content.split('```json')[1].split('```')[0];
+            } else {
+                jsonText = content.match(/\[.*\]/s)?.[0];
+            }
+            const aiSchedule = JSON.parse(jsonText);
+
+            // 일정 state에 반영 (장소 객체 매칭)
+            const newSchedule = {};
+            dateList.forEach(d => newSchedule[d] = []);
+            if (!aiSchedule || !Array.isArray(aiSchedule)) {
+                alert("AI 응답이 올바르지 않습니다.\n" + JSON.stringify(aiSchedule));
+                setAiLoading(false);
+                return;
+            }
+            aiSchedule.forEach(day => {
+                if (!day || !day.date || !Array.isArray(day.places)) return;
+                // 날짜 문자열 클린(공백/숨은문자 제거)
+                const cleanDate = String(day.date).replace(/[^\d-]/g, '').trim();
+                let targetDate = dateList.find(dt =>
+                    dt === cleanDate ||
+                    dt.replace(/-/g, '') === cleanDate.replace(/-/g, '') ||
+                    dt.replace(/-/g, '') === cleanDate.replace(/\D/g, '')
+                );
+                if (!targetDate || !newSchedule[targetDate]) {
+                    console.warn('날짜 매칭 실패:', day.date, cleanDate, dateList);
+                    return;
+                }
+                day.places.forEach(placeName => {
+                    const found = cartItems.find(i =>
+                        (i.spotName || i.name) === placeName ||
+                        (i.spotName || i.name).includes(placeName) ||
+                        placeName.includes(i.spotName || i.name)
+                    );
+                    if (found) newSchedule[targetDate].push(found);
+                });
+            });
+            setSchedule(newSchedule);
+            setCartItems([]);
+            alert("AI 일정 배치 완료!");
+        } catch (err) {
+            alert('AI 자동 분배 실패! (장소가 적거나 GPT 응답이 올바른지 확인)');
+            console.error(err);
+        }
+        setAiLoading(false);
     };
 
     // 드래그 & 드롭 관련 로직
@@ -340,14 +399,18 @@ const ScheduleSummaryPage = () => {
                                 </div>
                             )}
                         </Droppable>
-                        {/* ⭐️ 장바구니 자동 배치 버튼 ⭐️ */}
+                        {/* 🤖 AI 자동배치 (유일한 자동배치 기능) */}
                         <button
-                            onClick={autoDistributeCartItems}
-                            disabled={!tripInfo || cartItems.length === 0}
+                            onClick={handleAIAutoDistribute}
+                            disabled={!tripInfo || cartItems.length === 0 || aiLoading}
                             className="ai-generate-btn"
-                            style={{ marginTop: '16px', marginBottom: '10px' }}
+                            style={{ marginBottom: '10px', background: '#5936f5', color: 'white' }}
                         >
-                            {cartItems.length === 0 ? "장바구니가 비어있어요" : "🧠 장바구니 자동 배치"}
+                            {aiLoading
+                              ? "AI가 여행 일정 생성 중..."
+                              : (cartItems.length === 0
+                                ? "장바구니가 비어있어요"
+                                : "🤖 AI 자동 배치")}
                         </button>
                         <button
                             className="save-button"
