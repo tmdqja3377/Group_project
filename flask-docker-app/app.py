@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, send_file
 import pymysql
 from flask_cors import CORS
 from config import ACCESS_KEY, HOST, USER, PW, NAME, CLIENT, SECRET
@@ -9,6 +9,8 @@ import requests
 import os
 import concurrent.futures
 import json
+from urllib.parse import unquote
+
 photo_ref_cache = {}
 CACHE_FILE = "photo_cache.json"
 photo_ref_cache = {}  # 장소명 ➝ photo_reference 캐싱용
@@ -442,14 +444,19 @@ def add_planner_item_simple():
     latitude = data.get('latitude')
     longitude = data.get('longitude')
     spot_name = data.get('spotName')
+    photo_reference = data.get('photoReference')
+
+    if spot_name and photo_reference:
+        photo_ref_cache[spot_name] = photo_reference
+        save_cache()
     
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO planner_items (planner_id, latitude, longitude, spotName)
-            VALUES (%s, %s, %s, %s)
-        """, (planner_id, latitude, longitude, spot_name))
+            INSERT INTO planner_items (planner_id, latitude, longitude, spotName, photoReference)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (planner_id, latitude, longitude, spot_name, photo_reference))
         conn.commit()
         return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!"}), 201
     except Exception as e:
@@ -674,6 +681,40 @@ def get_preloaded(region):
         "맛집": [],
         "숙소": []
     }))
+
+# 이미지저장하는 API
+@app.route('/api/image/<spot_name>')
+def serve_or_download_image(spot_name):
+    GOOGLE_API_KEY = os.getenv('VITE_GOOGLE_PLACES_API_KEY')
+    spot_name = unquote(spot_name)
+    local_path = f'static/photos/{spot_name}.jpg'
+
+    # 폴더 없으면 생성
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+
+    # 1. 로컬에 파일이 있으면 바로 반환
+    if os.path.exists(local_path):
+        return send_file(local_path, mimetype='image/jpeg')
+
+    # 2. photoReference 캐시에 없으면 에러
+    photo_ref = photo_ref_cache.get(spot_name)
+    if not photo_ref:
+        return jsonify({'error': 'photoReference not found for this spot'}), 404
+
+    # 3. Google에서 사진 요청
+    photo_url = f'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_API_KEY}'
+    try:
+        res = requests.get(photo_url, timeout=5)
+        if res.status_code == 200:
+            with open(local_path, 'wb') as f:
+                f.write(res.content)
+            return send_file(local_path, mimetype='image/jpeg')
+        else:
+            return jsonify({'error': 'Failed to fetch image'}), 502
+    except Exception as e:
+        print("❌ 이미지 다운로드 실패:", e)
+        return jsonify({'error': str(e)}), 500
+    
 
 
 

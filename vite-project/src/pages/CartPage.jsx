@@ -3,7 +3,7 @@ import Navbar from '../assets/components/Navbar';
 import '../assets/css/CartPage.css';
 import "../assets/css/DetailPanel.css";
 import { getPlaces, addPlannerItem, deletePlannerItem } from '../assets/components/Databaseapi.jsx';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 
@@ -25,9 +25,13 @@ const CartPage = () => {
   const markersRef = useRef([]); // 🆕 생성된 마커들을 저장
   const navigate = useNavigate();
 
+  const location = useLocation();
+  const plannerId = location.state?.plannerId;
+
   // 👇 👇 👇 추가: 지도에 보이는 places 정보 전역 관리
   const [visiblePlaces, setVisiblePlaces] = useState([]);
   const [isAutoAdding, setIsAutoAdding] = useState(false);
+
 
   //구글 API관련
   const fetchGooglePlaceDetails = async (placeName, setGooglePlaceDetails) => {
@@ -56,7 +60,9 @@ const CartPage = () => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = [];
-        results.forEach((place) => {
+        results
+        .filter(place => place.business_status !== 'CLOSED_PERMANENTLY')
+        .forEach((place) => {
           const marker = new window.google.maps.Marker({
             map,
             position: place.geometry.location,
@@ -70,6 +76,34 @@ const CartPage = () => {
       }
     });
   };
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      const storedPlannerId = tripInfo?.plannerId || localStorage.getItem("plannerId");
+      if (!storedPlannerId) return;
+
+      try {
+        const res = await axios.get(`http://localhost:5001/api/planner/items`, {
+          params: { plannerId: storedPlannerId },
+          headers: { 'x-api-key': import.meta.env.VITE_WEB_API_KEY }
+        });
+
+        const items = res.data.items || [];
+        console.log("✅ DB에서 불러온 planner_items:", items);
+        setCartItems(items.map(item => ({
+          ...item,
+          name: item.spotName // ← 기존 코드와 호환되게 `name` 필드도 채움
+        })));
+      } catch (err) {
+        console.error("❌ planner_items 불러오기 실패:", err);
+      }
+    };
+
+    if (tripInfo?.plannerId) {
+      fetchCartItems();
+    }
+  }, [tripInfo]);
+
 
   useEffect(() => {
     if (!window.google) return;
@@ -103,11 +137,19 @@ const CartPage = () => {
     }
     try {
       const userId = localStorage.getItem('loggedInUserId');
+
+      // ✅ photoReference를 place 객체에서 직접 추출
+      const photoReference =
+        googlePlaceDetails?.photos?.[0]?.photo_reference ||
+        place.photos?.[0]?.photo_reference ||
+        null;
+
       const plannerItemData = {
         plannerId: tripInfo.plannerId,
         latitude: place.geometry?.location?.lat() ?? 0,
         longitude: place.geometry?.location?.lng() ?? 0,
         spotName: place.name,
+        photoReference,
       };
       console.log("plannerItemData 확인:", plannerItemData);
       await addPlannerItem(plannerItemData);  // 🔥 여기서 DB 저장 호출
@@ -270,6 +312,7 @@ const CartPage = () => {
             latitude: spot.geometry?.location?.lat() ?? spot.latitude,
             longitude: spot.geometry?.location?.lng() ?? spot.longitude,
             spotName: spot.name,
+            photoReference: place.photos?.[0]?.photo_reference || null,
             types: JSON.stringify(spot.types),
             // 날짜와 시퀀스는 배정 안 함 (나중에 스케쥴에서 자동 배치로 할당)
           });
@@ -440,12 +483,13 @@ const CartPage = () => {
             <div className="cart-list">
               {cartItems.map((item, idx) => (
                 <div key={idx} className="cart-item">
-                  <strong>{item.name}</strong>
-                  {item.photoReference && (
+                  <strong>{item.spotName || item.name}</strong>
+                  {(item.photoReference || item.photoUrl) && (
                     <img
-                      className="info-photo"
-                      src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${item.photoReference}&key=${GOOGLE_API_KEY}`}
-                      alt="대표 사진"
+                      loading="lazy"
+                      src={`http://localhost:5001/api/image/${encodeURIComponent(item.spotName || item.name)}`}
+                      alt="장소 사진"
+                      className="item-photo"
                     />
                   )}
                   <button className="delete-button" onClick={() => setCartItems(cartItems.filter((_, i) => i !== idx))}>삭제</button>

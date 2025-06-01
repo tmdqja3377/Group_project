@@ -33,26 +33,15 @@ const ScheduleSummaryPage = () => {
 
     const [isOverview, setIsOverview] = useState(false);
 
-    // 📍 기존 useEffect에 이 코드를 추가 또는 교체
-    useEffect(() => {
-    const fetchPlannerData = async () => {
-        if (!plannerId) return;
-
-        try {
-        const res = await axios.get(`${API_URL}/planner/items`, {
-            params: { plannerId },
-            headers: { 'x-api-key': API_KEY },
-        });
-        const allItems = res.data.items || [];
-        const scheduledItems = allItems.filter(i => i.visit_date); // visit_date가 존재하는 일정들만
-        setScheduleData(processScheduleData(scheduledItems));
-        } catch (err) {
-        console.error("일정 데이터 불러오기 실패:", err);
+    const handleGoToCart = () => {
+        if (!plannerId) {
+        alert("plannerId가 없습니다.");
+        return;
         }
-    };
 
-    fetchPlannerData();
-    }, [plannerId, location.state?.refresh]); // ⬅ refresh 플래그로 재호출 유도
+        localStorage.setItem("plannerId", plannerId); // 💾 새로고침 대비
+        navigate("/cart", { state: { plannerId } });  // 🧭 이동
+    };
 
 
     useEffect(() => {
@@ -411,6 +400,14 @@ const ScheduleSummaryPage = () => {
                                     {...provided.dragHandleProps}
                                 >
                                     📍 {item.spotName || item.name}
+                                    {item.photoReference && (
+                                        <img
+                                            loading="lazy"
+                                            src={`http://localhost:5001/api/image/${encodeURIComponent(item.spotName || item.name)}`}
+                                            alt="장소 사진"
+                                            className="item-photo"
+                                        />
+                                    )}
                                     <button
                                     className="delete-button"
                                     style={{ marginLeft: 8 }}
@@ -450,9 +447,17 @@ const ScheduleSummaryPage = () => {
                                     {...provided.dragHandleProps}
                                 >
                                     <div className="cart-item-info">
-                                    <strong>{item.spotName || item.name}</strong>
-                                    <button onClick={() => handleDeleteItem(item, index)}>삭제</button>
+                                        <strong>{item.spotName || item.name}</strong>
+                                        <button onClick={() => handleDeleteItem(item, index)}>삭제</button>
                                     </div>
+                                    {item.photoReference && (
+                                        <img
+                                            loading="lazy"
+                                            src={`http://localhost:5001/api/image/${encodeURIComponent(item.spotName || item.name)}`}
+                                            alt="장소 사진"
+                                            className="item-photo"
+                                        />
+                                    )}
                                 </div>
                                 )}
                             </Draggable>
@@ -488,15 +493,8 @@ const ScheduleSummaryPage = () => {
                     {cartItems.length === 0 ? "장바구니가 비어있어요" : "🧠 장바구니 자동 배치"}
                     </button>
 
-                    <button
-                        className="back-button"
-                        onClick={() =>
-                            navigate('/cart', {
-                            state: { plannerId, refresh: Date.now() }  // ✅ 강제 새로고침을 위한 고유 값
-                            })
-                        }
-                    >
-                    ← 장소 담기 화면으로
+                    <button onClick={handleGoToCart} className="go-to-cart-button">
+                        장소 담기
                     </button>
 
                     <button
