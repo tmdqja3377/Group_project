@@ -217,20 +217,6 @@ const CartPage = () => {
     setShowDetailPanel(false);
     setTimeout(() => setSelectedPlace(null), 300);
   };
-
-  // // 전역 addToCartItem 함수 등록
-  // useEffect(() => {
-  //   window.addToCartItem = (encodedPlace) => {
-  //     const place = JSON.parse(decodeURIComponent(encodedPlace));
-  //     addToCart(place);
-  //   };
-  // }, []);
-
-
-  // 장바구니에서 삭제
-  // const DeleteCartItem = (index) => {
-  //   setCartItems(prev => prev.filter((_, i) => i !== index));
-  // };  
   
   //여행정보 불러오기
   useEffect(() => {
@@ -307,19 +293,24 @@ const CartPage = () => {
           const todaysPicks = [...pickedRestaurants, ...pickedOthers];
   
           for (const spot of todaysPicks) {
+
+            const detailRes = await fetch(`http://localhost:5001/api/google/proxy-place-details?place_name=${encodeURIComponent(spot.name)}`);
+            const detailData = await detailRes.json();
+            const photoReference = detailData?.photos?.[0]?.photo_reference ?? null;
+
             await addPlannerItem({
             plannerId: tripInfo.plannerId,
             latitude: spot.geometry?.location?.lat() ?? spot.latitude,
             longitude: spot.geometry?.location?.lng() ?? spot.longitude,
             spotName: spot.name,
-            photoReference: place.photos?.[0]?.photo_reference || null,
+            photoReference,
             types: JSON.stringify(spot.types),
             // 날짜와 시퀀스는 배정 안 함 (나중에 스케쥴에서 자동 배치로 할당)
           });
   
             addList.push({
               ...spot,
-              photoReference: spot.photoReference || (spot.photos?.[0]?.photo_reference ?? null)
+              photoReference
             });
           }
         }
@@ -476,42 +467,41 @@ const CartPage = () => {
         
         {/* Right Sidebar: 장바구니 */}
         <div className="right-sidebar">
-        <h3>내 일정</h3>
-        {cartItems.length === 0 ? (
-            <p>장바구니에 담긴 장소가 없습니다.</p>
-          ) : (
-            <div className="cart-list">
-              {cartItems.map((item, idx) => (
-                <div key={idx} className="cart-item">
-                  <strong>{item.spotName || item.name}</strong>
+          <h3>내 일정</h3>
+          <div className="sidebar-content-wrapper">
+            {cartItems.map((item, idx) => (
+              <div key={idx} className="cart-item">
+                <div className="cart-item-image">
                   {(item.photoReference || item.photoUrl) && (
                     <img
                       loading="lazy"
                       src={`http://localhost:5001/api/image/${encodeURIComponent(item.spotName || item.name)}`}
                       alt="장소 사진"
-                      className="item-photo"
                     />
                   )}
-                  <button className="delete-button" onClick={() => handleDeleteCartItem(idx)}>
-                    삭제
-                  </button>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="cart-item-content">
+                  <div className="cart-item-title">{item.spotName || item.name}</div>
+                  <button className="delete-button" onClick={() => handleDeleteCartItem(idx)}>삭제</button>
+                </div>
+              </div>
+            ))}
+          </div>
           {/* === AI 자동 장소 추가 버튼 === */}
-          <button
-            className="ai-autoadd-button"
-            style={{ marginTop: 8, marginBottom: 8, background: '#6c63ff', color: 'white', borderRadius: '8px', padding: '8px', fontWeight: 600 }}
-            onClick={handleAutoAddAI}
-            disabled={isAutoAdding}
-          >
-            {isAutoAdding ? "추천 중..." : "🧠 AI 자동 장소 추가"}
-          </button>
-          <button className="next-button" onClick={() => navigate('/schedule-summary', { state: { plannerId: tripInfo.plannerId } })
-          }>  
-            다음
-          </button>
+          <div className="bottom-buttons">
+            <button
+              className="ai-autoadd-button"
+              style={{ marginTop: 8, marginBottom: 8, background: '#6c63ff', color: 'white', borderRadius: '8px', padding: '8px', fontWeight: 600 }}
+              onClick={handleAutoAddAI}
+              disabled={isAutoAdding}
+            >
+              {isAutoAdding ? "추천 중..." : "🧠 AI 자동 장소 추가"}
+            </button>
+            <button className="next-button" onClick={() => navigate('/schedule-summary', { state: { plannerId: tripInfo.plannerId } })
+            }>  
+              다음
+            </button>
+            </div>
         </div>
       </div>
     </>
