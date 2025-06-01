@@ -16,7 +16,7 @@ function LocationListPage() {
   const [recommendations, setRecommendations] = useState([]);
   const [recommendFoods, setRecommendFoods] = useState([]);
   const [recommendHotels, setRecommendHotels] = useState([]);
-
+  const [randomRegion, setRandomRegion] = useState('');
   const regions = [
     { name: '서울', lat: 37.5665, lng: 126.9780 },
     { name: '부산', lat: 35.1796, lng: 129.0756 },
@@ -104,6 +104,7 @@ function LocationListPage() {
     const fetchRandomRecommendation = async () => {
       const allRegions = ['서울', '부산', '제주', '경주', '강릉', '전주', '여수', '속초'];
       const randomRegion = allRegions[Math.floor(Math.random() * allRegions.length)];
+      setRandomRegion(randomRegion);
       console.log(`🎲 랜덤 지역 선택: ${randomRegion}`);
 
       try {
@@ -111,6 +112,7 @@ function LocationListPage() {
           `http://localhost:5001/api/google/search-places?query=여행+${randomRegion}+명소`
         );
         const data = await response.json();
+
         const places = data.results.slice(0, 20);
 
         const placeList = places.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
@@ -149,33 +151,37 @@ function LocationListPage() {
 
         const content = chatRes.data.choices[0].message.content;
         const cleaned = content.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleaned); // 이 줄 반드시 있어야 함
+        const parsed = JSON.parse(cleaned);
 
-        // 🍽️ 사진 정보 가져오기 함수
-        const fetchPhotoInfoForCategory = async (items, region) => {
-          const results = await Promise.all(items.map(async (item) => {
-            try {
-              const searchRes = await fetch(
-                `http://localhost:5001/api/google/search-places?query=${region}+${item.장소명}`
-              );
-              const searchData = await searchRes.json();
-              const found = searchData.results?.[0];
-              const photoUrls = found?.photos?.map(photo =>
-                `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}`
-              ) || [];
-              return { ...item, photoUrls };
-            } catch (e) {
-              console.error('사진 불러오기 실패:', e);
-              return { ...item, photoUrls: [] };
-            }
-          }));
+        const getPhotos = async (categoryList) => {
+          const res = await fetch('http://localhost:5001/api/google/batch-places', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              region: randomRegion,
+              place_names: categoryList.map(item => item.장소명),
+            }),
+          });
 
-          return results;
+          const data = await res.json();
+          const resultArray = data.results || [];
+
+          if (!Array.isArray(resultArray)) {
+            console.error('❌ 잘못된 응답 (expected array):', data);
+            return categoryList.map(item => ({ ...item, photoUrls: [] }));
+          }
+
+          return categoryList.map(item => {
+            const match = resultArray.find(d => d.장소명 === item.장소명);
+            console.log('📸 매칭 결과:', item.장소명, match);
+            return { ...item, photoUrls: match?.photoUrls || [] };
+          });
         };
+        
 
-        const matchedSpots = await fetchPhotoInfoForCategory(parsed.추천장소 || [], randomRegion);
-        const foodsWithPhotos = await fetchPhotoInfoForCategory(parsed.추천맛집 || [], randomRegion);
-        const hotelsWithPhotos = await fetchPhotoInfoForCategory(parsed.추천숙소 || [], randomRegion);
+        const matchedSpots = await getPhotos(parsed.추천장소 || []);
+        const foodsWithPhotos = await getPhotos(parsed.추천맛집 || []);
+        const hotelsWithPhotos = await getPhotos(parsed.추천숙소 || []);
 
         setRecommendations(matchedSpots);
         setRecommendFoods(foodsWithPhotos);
@@ -185,11 +191,53 @@ function LocationListPage() {
       }
     };
     
+    
 
     fetchRandomRecommendation();
   }, []);
 
+  useEffect(() => {
+    const region = '서울';  // 또는 selectedRegion?.name 사용 가능
+    fetch(`http://localhost:5001/api/preloaded-recommendations/${region}`)
+      .then(res => res.json())
+      .then(data => {
+        // 명소
+        const spots = (data['명소'] || []).map(item => ({
+          장소명: item.name,
+          추천이유: item.formatted_address || '방문하기 좋은 명소입니다.',
+          photoUrls: item.photos?.length
+            ? [`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${item.photos[0].photo_reference}&key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}`]
+            : []
+        }));
+        setRecommendations(spots);
 
+        // 맛집
+        const foods = (data['맛집'] || []).map(item => ({
+          장소명: item.name,
+          추천이유: item.formatted_address || '현지인 추천 맛집입니다.',
+          photoUrls: item.photos?.length
+            ? [`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${item.photos[0].photo_reference}&key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}`]
+            : []
+        }));
+        setRecommendFoods(foods);
+
+        // 숙소
+        const hotels = (data['숙소'] || []).map(item => ({
+          장소명: item.name,
+          추천이유: item.formatted_address || '숙박하기 좋은 장소입니다.',
+          photoUrls: item.photos?.length
+            ? [`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${item.photos[0].photo_reference}&key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}`]
+            : []
+        }));
+        setRecommendHotels(hotels);
+      })
+      .catch(err => {
+        console.error('🔥 추천 데이터 불러오기 실패:', err);
+      });
+  }, []);
+  
+  
+  
 
   // 외부 클릭 감지 로직 임시 주석 처리
   useEffect(() => {
@@ -316,7 +364,17 @@ function LocationListPage() {
                 <p>{item.추천이유}</p>
                 <div className="photo-gallery">
                   {item.photoUrls?.map((url, i) => (
-                    <img key={i} src={url} alt={item.장소명} className="photo" />
+                    <img
+                      key={i}
+                      src={url}
+                      alt={item.장소명}
+                      className="photo"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { e.target.src = '/default-image.jpg'; }}
+                    />
+                  
+                  
                   ))}
                 </div>
               </div>
@@ -332,7 +390,16 @@ function LocationListPage() {
               <p>{item.추천이유}</p>
               <div className="photo-gallery">
                 {item.photoUrls?.map((url, i) => (
-                  <img key={i} src={url} alt={item.장소명} className="photo" />
+                  <img
+                    key={i}
+                    src={url}
+                    alt={item.장소명}
+                    className="photo"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
+                
+                
                 ))}
               </div>
             </div>
@@ -348,7 +415,16 @@ function LocationListPage() {
               <p>{item.추천이유}</p>
               <div className="photo-gallery">
                 {item.photoUrls?.map((url, i) => (
-                  <img key={i} src={url} alt={item.장소명} className="photo" />
+                  <img
+                    key={i}
+                    src={url}
+                    alt={item.장소명}
+                    className="photo"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
+                
+                
                 ))}
               </div>
             </div>

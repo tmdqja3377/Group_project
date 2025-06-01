@@ -7,12 +7,31 @@ import bcrypt
 from mysql.connector.cursor import MySQLCursorDict
 import requests
 import os
+import concurrent.futures
+import json
+photo_ref_cache = {}
+CACHE_FILE = "photo_cache.json"
+photo_ref_cache = {}  # 장소명 ➝ photo_reference 캐싱용
+
+preloaded_data = {}
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
+
+# 🔄 서버 시작 시 캐시 로드
+if os.path.exists(CACHE_FILE):
+    with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+        photo_ref_cache = json.load(f)
+
+# 📝 캐시 저장 함수
+def save_cache():
+    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(photo_ref_cache, f, ensure_ascii=False, indent=2)
 
 # .env 또는 환경변수에서 API 키 불러오기
 @app.route('/api/google/proxy-place-details', methods=['GET'])
@@ -567,27 +586,94 @@ def batch_google_places():
     GOOGLE_API_KEY = os.getenv('VITE_GOOGLE_PLACES_API_KEY')
     search_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
 
-    results = []
-
-    for name in place_names:
+    # 각 장소에 대해 Google Places API에서 사진 URL 추출
+    def fetch_place(name):
         query = f"{region} {name}"
-        params = {
-            'query': query,
-            'language': 'ko',
-            'key': GOOGLE_API_KEY
-        }
         try:
-            res = requests.get(search_url, params=params)
+            # 1️⃣ 이미 캐시에 있으면 바로 URL 생성
+            if name in photo_ref_cache:
+                ref = photo_ref_cache[name]
+                photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={ref}&key={GOOGLE_API_KEY}"
+                return {"장소명": name, "photoUrls": [photo_url]}
+
+            # 2️⃣ 없으면 API 요청해서 가져오고 캐시에 저장
+            params = {
+                'query': query,
+                'language': 'ko',
+                'key': GOOGLE_API_KEY
+            }
+            res = requests.get(search_url, params=params, timeout=5)
             data = res.json()
-            first_result = data['results'][0] if data.get('results') else None
-            results.append({"name": name, "result": first_result})
+            first_result = data.get('results', [None])[0]
+
+            if not first_result or 'photos' not in first_result:
+                return {"장소명": name, "photoUrls": ["/no-image.jpg"]}
+
+
+            ref = first_result['photos'][0]['photo_reference']
+            photo_ref_cache[name] = ref
+            save_cache()# 캐시에 저장
+
+            photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={ref}&key={GOOGLE_API_KEY}"
+            return {"장소명": name, "photoUrls": [photo_url]}
+
         except Exception as e:
-            results.append({"name": name, "error": str(e)})
+            print(f"❌ Error fetching {name}: {e}")
+            return {"장소명": name, "photoUrls": []}
+
+
+    # 🧠 최대 동시 요청 수 제한 → 서버와 Google API 둘 다 보호
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        results = list(executor.map(fetch_place, place_names))
 
     return jsonify({"results": results})
 
 
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# ✅ 추천 장소 캐시 저장소 초기화
+app.config['RECOMMENDATION_CACHE'] = {}
+
+# ✅ 서버 시작 시 미리 불러올 지역 리스트
+PRELOAD_REGIONS = ['서울', '부산', '제주', '경주', '강릉', '전주', '여수', '속초']
+
+# ✅ 추천 장소 미리 불러오기 함수
+def preload_recommendations():
+    GOOGLE_API_KEY = os.getenv('VITE_GOOGLE_PLACES_API_KEY')
+    for region in PRELOAD_REGIONS:
+        try:
+            categories = {
+                "명소": f"{region} 여행 명소",
+                "맛집": f"{region} 맛집",
+                "숙소": f"{region} 숙소"
+            }
+            app.config['RECOMMENDATION_CACHE'][region] = {}
+
+            for key, query in categories.items():
+                response = requests.get(
+                    'https://maps.googleapis.com/maps/api/place/textsearch/json',
+                    params={'query': query, 'language': 'ko', 'key': GOOGLE_API_KEY},
+                    timeout=5
+                )
+                if response.ok:
+                    results = response.json().get('results', [])[:10]
+                    app.config['RECOMMENDATION_CACHE'][region][key] = results
+                    print(f"✅ {region} {key} 미리 로드 완료 ({len(results)}개)")
+                else:
+                    print(f"❌ {region} {key} 로드 실패: {response.status_code}")
+        except Exception as e:
+            print(f"🔥 {region} 데이터 로딩 중 오류: {e}")
+
+preload_recommendations()
+# ✅ 추천 장소 조회 API
+@app.route('/api/preloaded-recommendations/<region>', methods=['GET'])
+def get_preloaded(region):
+    region = region.strip()
+    return jsonify(app.config['RECOMMENDATION_CACHE'].get(region, {
+        "명소": [],
+        "맛집": [],
+        "숙소": []
+    }))
+
+
+
