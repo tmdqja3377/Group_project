@@ -234,42 +234,35 @@ const ScheduleSummaryPage = () => {
         }
     };
 
-    // 날짜 추가
-    const handleAddDate = () => {
-        if (!newDate) return alert('날짜를 입력하세요.');
-        if (schedule[newDate]) return alert('이미 존재하는 날짜입니다.');
-        setSchedule({ ...schedule, [newDate]: [] });
-        setNewDate('');
-    };
-
     // 카트(장바구니)에서 제거
-    const handleDeleteItem = async (item, index) => {
+    const handleDeleteItem = async (index) => {
+        const itemToDelete = cartItems[index];
         try {
-            if (item.id) {
-            await deletePlannerItem(item.id);  // DB에서 삭제
+            if (itemToDelete.id) {
+                await deletePlannerItem(itemToDelete.id);
             }
             setCartItems(prev => prev.filter((_, i) => i !== index));
-        } catch (err) {
-            console.error("삭제 실패:", err);
-            alert("DB 삭제 중 오류가 발생했습니다.");
+        } catch (error) {
+            console.error("삭제 실패:", error);
+            alert("삭제에 실패했습니다.");
         }
-    };
+    }
 
     // 날짜별 일정에서 삭제(→ 다시 카트로 이동)
     const handleDeleteFromSchedule = async (date, index) => {
-        const item = schedule[date][index];
+        const itemToDelete = schedule[date][index];
         try {
-            if (item.id) {
-            await deletePlannerItem(item.id); // ✅ DB에서 삭제
+            if (itemToDelete.id) {
+                await deletePlannerItem(itemToDelete.id);
             }
-            setCartItems(prev => [...prev, item]);
+            setCartItems(prev => [...prev, itemToDelete]);
             setSchedule(prev => ({
-            ...prev,
-            [date]: prev[date].filter((_, i) => i !== index),
+                ...prev,
+                [date]: prev[date].filter((_, i) => i !== index),
             }));
-        } catch (err) {
-            console.error("DB 삭제 실패:", err);
-            alert("DB 삭제 중 오류가 발생했습니다.");
+        } catch (error) {
+            console.error("삭제 실패:", error);
+            alert("삭제에 실패했습니다.");
         }
     };
 
@@ -399,7 +392,6 @@ const ScheduleSummaryPage = () => {
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
                                 >
-                                    📍 {item.spotName || item.name}
                                     {item.photoReference && (
                                         <img
                                             loading="lazy"
@@ -408,6 +400,7 @@ const ScheduleSummaryPage = () => {
                                             className="item-photo"
                                         />
                                     )}
+                                    <span className="cart-item-title">{item.spotName || item.name}</span>
                                     <button
                                     className="delete-button"
                                     style={{ marginLeft: 8 }}
@@ -447,17 +440,22 @@ const ScheduleSummaryPage = () => {
                                     {...provided.dragHandleProps}
                                 >
                                     <div className="cart-item-info">
-                                        <strong>{item.spotName || item.name}</strong>
-                                        <button onClick={() => handleDeleteItem(item, index)}>삭제</button>
+                                        {item.photoReference && (
+                                            <img
+                                                loading="lazy"
+                                                src={`http://localhost:5001/api/image/${encodeURIComponent(item.spotName || item.name)}`}
+                                                alt="장소 사진"
+                                                className="item-photo"
+                                            />
+                                        )}
+                                        <span className="cart-item-title">{item.spotName || item.name}</span>
+                                        <button
+                                            className="delete-button"
+                                            onClick={() => handleDeleteItem(index)}
+                                        >
+                                            삭제
+                                        </button>
                                     </div>
-                                    {item.photoReference && (
-                                        <img
-                                            loading="lazy"
-                                            src={`http://localhost:5001/api/image/${encodeURIComponent(item.spotName || item.name)}`}
-                                            alt="장소 사진"
-                                            className="item-photo"
-                                        />
-                                    )}
                                 </div>
                                 )}
                             </Draggable>

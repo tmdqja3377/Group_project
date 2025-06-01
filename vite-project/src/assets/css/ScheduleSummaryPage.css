@@ -82,6 +82,7 @@
 .schedule-item {
   background-color: white;
   border: 1px solid #ddd;
+  align-items: center;
   border-radius: 5px;
   padding: 10px;
   margin: 5px 0;
@@ -89,6 +90,38 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.cart-item-info {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-left: 10px;
+}
+
+.cart-item-title {
+  flex: 1;    /* 이게 핵심!! */
+  font-size: 15px;
+  font-weight: 500;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delete-button {
+  background: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  padding: 5px 12px;
+  margin-left: 12px;
+  cursor: pointer;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .schedule-item button {
@@ -137,18 +170,15 @@
   align-items: center;
 }
 
-.cart-item-info {
-  flex: 1;
-}
-
-.delete-button {
-  background-color: #f44336; /* 빨간색 */
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.cart-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  margin-bottom: 10px;
+  width: 100%;
 }
 
 .delete-button:hover {
@@ -194,10 +224,17 @@
   opacity: 0.85;
 }
 
+/* 일정/카트 내 미니 사진 */
 .item-photo {
-  width: 100%;
-  max-width: 180px;
-  margin-top: 6px;
-  border-radius: 8px;
+  width: 60px;   /* 또는 32px, 28px 등 더 작게도 가능 */
+  height: 60px;
   object-fit: cover;
+  border-radius: 5px;
+  margin-right: 15px;
+  flex-shrink: 0;
 }
+
+
+
+
+

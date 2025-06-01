@@ -438,8 +438,6 @@ def change_password():
 @require_api_key
 def add_planner_item_simple():
     data = request.get_json()
-    print(f"받은 데이터:", data)  # 🔥 이거 추가
-    
     planner_id = data.get('plannerId')
     latitude = data.get('latitude')
     longitude = data.get('longitude')
@@ -449,7 +447,7 @@ def add_planner_item_simple():
     if spot_name and photo_reference:
         photo_ref_cache[spot_name] = photo_reference
         save_cache()
-    
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -458,9 +456,10 @@ def add_planner_item_simple():
             VALUES (%s, %s, %s, %s, %s)
         """, (planner_id, latitude, longitude, spot_name, photo_reference))
         conn.commit()
-        return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!"}), 201
+        inserted_id = cursor.lastrowid
+        return jsonify({"message": "플래너 항목이 성공적으로 추가되었습니다!", "id": inserted_id}), 201
     except Exception as e:
-        print(f"플래너 항목 추가 실패:", e)  # 🔥 여기도 로그 꼭
+        print(f"플래너 항목 추가 실패:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
@@ -474,17 +473,17 @@ def delete_planner_item(item_id):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        print(f"item: {item_id}")
+        print(f"삭제 요청 받은 item_id: {item_id}")
 
-        # planner_items 테이블에서 항목 삭제
-        cursor.execute("DELETE FROM planner_items WHERE spot_id = %s", (item_id,))
+        # ✅ 수정: id 기준으로 삭제
+        cursor.execute("DELETE FROM planner_items WHERE id = %s", (item_id,))
         conn.commit()
-        print(f"플래너 항목 {item_id} 삭제됨")
 
-        # 삭제된 항목 확인
         if cursor.rowcount > 0:
+            print(f"플래너 항목 {item_id} 삭제 성공")
             return jsonify({"message": f"플래너 항목 {item_id}가 삭제되었습니다!"}), 200
         else:
+            print(f"플래너 항목 {item_id} 없음")
             return jsonify({"error": "삭제할 항목이 없습니다."}), 404
 
     except Exception as e:
@@ -493,7 +492,7 @@ def delete_planner_item(item_id):
     finally:
         cursor.close()
         conn.close()
-
+        
 #플래너 조회
 @app.route('/api/planner/info')
 def get_planner_info():

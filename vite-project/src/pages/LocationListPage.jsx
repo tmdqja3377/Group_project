@@ -355,80 +355,61 @@ function LocationListPage() {
               검색
             </button>
           </div>
-          <div className="ai-recommendations">
-          <h3>추천 장소 ✨</h3>
-          <div className="recommendation-list">
-            {recommendations.map((item, index) => (
-              <div className="recommendation-card" key={index}>
-                <h4>{item.장소명}</h4>
-                <p>{item.추천이유}</p>
-                <div className="photo-gallery">
-                  {item.photoUrls?.map((url, i) => (
-                    <img
-                      key={i}
-                      src={url}
-                      alt={item.장소명}
-                      className="photo"
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => { e.target.src = '/default-image.jpg'; }}
-                    />
-                  
-                  
-                  ))}
+          <div className='search-bottom-area'>
+            <div className="ai-recommendations">
+              <h3>추천 장소 ✨</h3>
+              <div className="recommendation-list">
+                {recommendations.map((item, index) => (
+                  <div className="recommendation-card" key={index}>
+                    <h4>{item.장소명}</h4>
+                    <p>{item.추천이유}</p>
+                    <div className="photo-gallery">
+                      {item.photoUrls?.map((url, i) => (
+                        <img key={i} src={url} alt={item.장소명} className="photo" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="ai-recommendations">
+
+              <h3>추천 맛집 🍽️</h3>
+              <div className="recommendation-list">
+                {recommendFoods.map((item, index) => (
+                  <div className="recommendation-card" key={index}>
+                    <h4>{item.장소명}</h4>
+                    <p>{item.추천이유}</p>
+                    <div className="photo-gallery">
+                      {item.photoUrls?.map((url, i) => (
+                        <img key={i} src={url} alt={item.장소명} className="photo" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+
+            <div className="ai-recommendations">
+              <h3>추천 숙소 🏨</h3>
+              <div className="recommendation-list">
+              {recommendHotels.map((item, index) => (
+                <div className="recommendation-card" key={index}>
+                  <h4>{item.장소명}</h4>
+                  <p>{item.추천이유}</p>
+                  <div className="photo-gallery">
+                    {item.photoUrls?.map((url, i) => (
+                      <img key={i} src={url} alt={item.장소명} className="photo" />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-
-        <h3>추천 맛집 🍽️</h3>
-        <div className="recommendation-list">
-          {recommendFoods.map((item, index) => (
-            <div className="recommendation-card" key={index}>
-              <h4>{item.장소명}</h4>
-              <p>{item.추천이유}</p>
-              <div className="photo-gallery">
-                {item.photoUrls?.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt={item.장소명}
-                    className="photo"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                
-                
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
 
 
-        <h3>추천 숙소 🏨</h3>
-        <div className="recommendation-list">
-          {recommendHotels.map((item, index) => (
-            <div className="recommendation-card" key={index}>
-              <h4>{item.장소명}</h4>
-              <p>{item.추천이유}</p>
-              <div className="photo-gallery">
-                {item.photoUrls?.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt={item.장소명}
-                    className="photo"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                
-                
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
           {/* 기존 드롭다운 영역은 각 버튼 아래로 이동됨 */}
         </div>
