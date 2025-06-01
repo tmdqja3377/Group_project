@@ -117,6 +117,9 @@ const CartPage = () => {
       const map = new window.google.maps.Map(document.getElementById('google-map'), {
         center,
         zoom: 13,
+        fullscreenControl: false,
+        streetViewControl: false,
+        mapTypeControl: false,
       });
       mapRef.current = map;
       loadPlaces(map, category);
@@ -136,9 +139,6 @@ const CartPage = () => {
       return;
     }
     try {
-      const userId = localStorage.getItem('loggedInUserId');
-
-      // ✅ photoReference를 place 객체에서 직접 추출
       const photoReference =
         googlePlaceDetails?.photos?.[0]?.photo_reference ||
         place.photos?.[0]?.photo_reference ||
@@ -152,9 +152,13 @@ const CartPage = () => {
         photoReference,
       };
       console.log("plannerItemData 확인:", plannerItemData);
-      await addPlannerItem(plannerItemData);  // 🔥 여기서 DB 저장 호출
-      
-      addToCart(place);  // 로컬 상태 업데이트
+
+      // 🔥 DB에 저장 후, 생성된 ID 받아오기
+      const res = await addPlannerItem(plannerItemData); // { id: ..., message: ... }
+
+      // 🔑 ID 포함하여 cart에 추가
+      addToCart({ ...place, id: res.id });
+
     } catch (error) {
       console.error('플래너 항목 저장 실패', error);
     }
@@ -172,22 +176,18 @@ const CartPage = () => {
     });
   };
 
-
-
-  // 장바구니에서 삭제
-  // const handleDeleteCartItem = async (index) => {
-  //   const itemToDelete = cartItems[index];
-  //   try {
-  //     // 데이터베이스에서 항목 삭제
-  //     await deletePlannerItem(itemToDelete.id); // 항목의 id를 기반으로 삭제
-
-  //     // 장바구니에서 항목 삭제
-  //     setCartItems(prev => prev.filter((_, i) => i !== index));
-  //     console.log(`플래너 항목 ${itemToDelete.name}이 삭제되었습니다!`);
-  //   } catch (error) {
-  //     console.error("플래너 항목 삭제 실패", error);
-  //   }
-  // };
+  const handleDeleteCartItem = async (index) => {
+    const itemToDelete = cartItems[index];
+    try {
+      if (itemToDelete.id) {
+        await deletePlannerItem(itemToDelete.id); // DB에서도 삭제
+      }
+      setCartItems(prev => prev.filter((_, i) => i !== index)); // 로컬 상태 삭제
+    } catch (error) {
+      console.error("장바구니 항목 삭제 실패:", error);
+      alert("삭제 실패");
+    }
+  };
 
   const setMapCenter = (lat, lng) => {
     if (mapRef.current) {
@@ -357,7 +357,7 @@ const CartPage = () => {
                 ×
               </button>
             )}
-            <button type="submit" className="search-button">검색</button>
+            <button type="submit" className="search-button-min">검색</button>
           </form>
 
             {/* 자동완성 결과 */}
@@ -492,7 +492,9 @@ const CartPage = () => {
                       className="item-photo"
                     />
                   )}
-                  <button className="delete-button" onClick={() => setCartItems(cartItems.filter((_, i) => i !== idx))}>삭제</button>
+                  <button className="delete-button" onClick={() => handleDeleteCartItem(idx)}>
+                    삭제
+                  </button>
                 </div>
               ))}
             </div>

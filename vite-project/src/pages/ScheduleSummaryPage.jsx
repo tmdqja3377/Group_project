@@ -246,7 +246,7 @@ const ScheduleSummaryPage = () => {
             console.error("삭제 실패:", error);
             alert("삭제에 실패했습니다.");
         }
-    }
+    };
 
     // 날짜별 일정에서 삭제(→ 다시 카트로 이동)
     const handleDeleteFromSchedule = async (date, index) => {
