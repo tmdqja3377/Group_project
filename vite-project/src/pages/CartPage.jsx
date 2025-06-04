@@ -215,7 +215,7 @@ const CartPage = () => {
   //상세페이지 애니메이션 지우기
   const closeDetailPanel = () => {
     setShowDetailPanel(false);
-    setTimeout(() => setSelectedPlace(null), 300);
+    setTimeout(() => setSelectedPlace(null), 200);
   };
   
   //여행정보 불러오기
@@ -400,7 +400,7 @@ const CartPage = () => {
                 <button onClick={() => setActiveTab('reviews')} className={activeTab === 'reviews' ? 'active' : ''}>💬 리뷰</button>
               </div>
 
-              <button className="close-btn" onClick={() => setIsInfoPanelVisible(false)}>×</button>
+              <button className="close-btn" onClick={closeDetailPanel}>×</button>
               <h2>{selectedPlace.name}</h2>
               <p><strong>📍 주소:</strong> {selectedPlace.vicinity || '정보 없음'}</p>
               <p><strong>📞 연락처:</strong> {selectedPlace.formatted_phone_number || '없음'}</p>
